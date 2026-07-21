@@ -1,0 +1,22 @@
+{
+  "name": "waevo-hosting",
+  "version": "1.0.0",
+  "description": "Panel de hosting para bots de Discord - Waevo Hosting",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve . -l 3000",
+    "dev": "serve . -l 3000"
+  },
+  "keywords": [
+    "hosting",
+    "discord",
+    "bots",
+    "firebase",
+    "panel"
+  ],
+  "author": "Waevo Hosting",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}
