@@ -7,13 +7,7 @@
     "start": "serve . -l 3000",
     "dev": "serve . -l 3000"
   },
-  "keywords": [
-    "hosting",
-    "discord",
-    "bots",
-    "firebase",
-    "panel"
-  ],
+  "keywords": ["hosting", "discord", "bots", "firebase", "panel"],
   "author": "Waevo Hosting",
   "license": "MIT",
   "devDependencies": {
