@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Waevo Hosting - Panel Profesional</title>
+    <title>Waevo Hosting — Panel Profesional</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -130,7 +130,7 @@
             border-radius: 0.75rem;
             padding: 0.75rem;
             resize: vertical;
-            min-height: 120px;
+            min-height: 160px;
             width: 100%;
             outline: none;
         }
@@ -209,6 +209,24 @@
         .btn-success:hover {
             transform: scale(1.02);
             box-shadow: 0 8px 25px -5px rgba(34, 197, 94, 0.4);
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            transition: all 0.2s;
+        }
+        .btn-warning:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.4);
+        }
+        .setting-group {
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        .setting-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
     </style>
 </head>
@@ -502,7 +520,7 @@
             }
 
             // =============================================================
-            // 7. COMPONENTE: CONSOLA (desactivada pero con estructura)
+            // 7. COMPONENTE: CONSOLA (desactivada)
             // =============================================================
             function ConsoleStats() {
                 const [isConnected, setIsConnected] = React.useState(false);
@@ -585,14 +603,25 @@
             }
 
             // =============================================================
-            // 8. COMPONENTE: AJUSTES (más opciones)
+            // 8. COMPONENTE: AJUSTES (MUCHOS MÁS)
             // =============================================================
             function Settings() {
-                const [botName, setBotName] = React.useState('');
-                const [port, setPort] = React.useState('3000');
-                const [startup, setStartup] = React.useState('');
-                const [packages, setPackages] = React.useState('');
-                const [envVars, setEnvVars] = React.useState('');
+                const [settings, setSettings] = React.useState({
+                    botName: '',
+                    port: '3000',
+                    startup: '',
+                    packages: '',
+                    envVars: '',
+                    nodeVersion: '18',
+                    pythonVersion: '3.10',
+                    memoryLimit: '512',
+                    cpuLimit: '100',
+                    diskLimit: '10',
+                    autoRestart: true,
+                    backupEnabled: false,
+                    logLevel: 'info',
+                    timezone: 'Europe/Madrid'
+                });
                 const [loading, setLoading] = React.useState(true);
 
                 React.useEffect(() => {
@@ -600,67 +629,139 @@
                     if (stored) {
                         try {
                             const data = JSON.parse(stored);
-                            setBotName(data.botName || '');
-                            setPort(data.port || '3000');
-                            setStartup(data.startup || '');
-                            setPackages(data.packages || '');
-                            setEnvVars(data.envVars || '');
+                            setSettings(prev => ({ ...prev, ...data }));
                         } catch (e) {}
                     }
                     setLoading(false);
                 }, []);
 
                 const saveSettings = () => {
-                    const data = { botName, port, startup, packages, envVars };
-                    localStorage.setItem('waevo_settings', JSON.stringify(data));
-                    toast.success('Ajustes guardados');
+                    localStorage.setItem('waevo_settings', JSON.stringify(settings));
+                    toast.success('Todos los ajustes guardados');
+                };
+
+                const update = (key, value) => {
+                    setSettings(prev => ({ ...prev, [key]: value }));
                 };
 
                 if (loading) return ( <div className="flex items-center justify-center h-64"><span className="spinner" /></div> );
 
                 return (
                     <div className="fade-in">
-                        <h1 className="text-3xl font-bold mb-6">Ajustes</h1>
+                        <h1 className="text-3xl font-bold mb-6">Ajustes Avanzados</h1>
                         <div className="glass-card space-y-6">
-                            <div>
-                                <label className="block text-gray-400 mb-2 flex items-center gap-2"><i className="fa-solid fa-tag text-blue-400" /> Nombre del bot</label>
-                                <input type="text" value={botName} onChange={(e) => setBotName(e.target.value)} placeholder="MiBot" className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            {/* Sección: General */}
+                            <div className="setting-group">
+                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><i className="fa-solid fa-gear text-blue-400" /> General</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Nombre del bot</label>
+                                        <input type="text" value={settings.botName} onChange={(e) => update('botName', e.target.value)} placeholder="MiBot" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Puerto</label>
+                                        <input type="text" value={settings.port} onChange={(e) => update('port', e.target.value)} placeholder="3000" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Zona horaria</label>
+                                        <select value={settings.timezone} onChange={(e) => update('timezone', e.target.value)} className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="Europe/Madrid">Madrid</option>
+                                            <option value="America/Mexico_City">Ciudad de México</option>
+                                            <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
+                                            <option value="UTC">UTC</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Nivel de logs</label>
+                                        <select value={settings.logLevel} onChange={(e) => update('logLevel', e.target.value)} className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="debug">Debug</option>
+                                            <option value="info">Info</option>
+                                            <option value="warn">Warn</option>
+                                            <option value="error">Error</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-gray-400 mb-2 flex items-center gap-2"><i className="fa-solid fa-plug text-green-400" /> Puerto</label>
-                                <input type="text" value={port} onChange={(e) => setPort(e.target.value)} placeholder="3000" className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+                            {/* Sección: Versiones y límites */}
+                            <div className="setting-group">
+                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><i className="fa-solid fa-microchip text-purple-400" /> Versiones y límites</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Node.js</label>
+                                        <input type="text" value={settings.nodeVersion} onChange={(e) => update('nodeVersion', e.target.value)} placeholder="18" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Python</label>
+                                        <input type="text" value={settings.pythonVersion} onChange={(e) => update('pythonVersion', e.target.value)} placeholder="3.10" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Límite de RAM (MB)</label>
+                                        <input type="number" value={settings.memoryLimit} onChange={(e) => update('memoryLimit', e.target.value)} placeholder="512" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Límite de CPU (%)</label>
+                                        <input type="number" value={settings.cpuLimit} onChange={(e) => update('cpuLimit', e.target.value)} placeholder="100" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Límite de disco (GB)</label>
+                                        <input type="number" value={settings.diskLimit} onChange={(e) => update('diskLimit', e.target.value)} placeholder="10" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-gray-400 mb-2 flex items-center gap-2"><i className="fa-solid fa-play text-yellow-400" /> Comando de inicio</label>
-                                <input type="text" value={startup} onChange={(e) => setStartup(e.target.value)} placeholder="node bot.js" className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+                            {/* Sección: Startup y paquetes */}
+                            <div className="setting-group">
+                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><i className="fa-solid fa-play text-green-400" /> Ejecución</h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Comando de inicio</label>
+                                        <input type="text" value={settings.startup} onChange={(e) => update('startup', e.target.value)} placeholder="node bot.js" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Paquetes adicionales</label>
+                                        <input type="text" value={settings.packages} onChange={(e) => update('packages', e.target.value)} placeholder="express dotenv" className="w-full bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-400 text-sm mb-1">Variables de entorno</label>
+                                        <textarea value={settings.envVars} onChange={(e) => update('envVars', e.target.value)} placeholder="CLAVE=valor" className="code-editor w-full" rows="3" />
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-gray-400 mb-2 flex items-center gap-2"><i className="fa-solid fa-cube text-purple-400" /> Paquetes adicionales</label>
-                                <input type="text" value={packages} onChange={(e) => setPackages(e.target.value)} placeholder="express dotenv" className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+                            {/* Sección: Comportamiento */}
+                            <div className="setting-group">
+                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><i className="fa-solid fa-toggle-on text-yellow-400" /> Comportamiento</h3>
+                                <div className="flex flex-wrap gap-6">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={settings.autoRestart} onChange={(e) => update('autoRestart', e.target.checked)} className="w-5 h-5 accent-blue-500" />
+                                        <span>Reinicio automático</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={settings.backupEnabled} onChange={(e) => update('backupEnabled', e.target.checked)} className="w-5 h-5 accent-blue-500" />
+                                        <span>Backups habilitados</span>
+                                    </label>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-gray-400 mb-2 flex items-center gap-2"><i className="fa-solid fa-key text-red-400" /> Variables de entorno</label>
-                                <textarea value={envVars} onChange={(e) => setEnvVars(e.target.value)} placeholder="CLAVE=valor" className="code-editor w-full" rows="4" />
-                            </div>
-                            <button onClick={saveSettings} className="btn-primary px-8 py-3 rounded-xl font-bold transition flex items-center gap-3"><i className="fa-solid fa-floppy-disk" /> Guardar cambios</button>
+
+                            <button onClick={saveSettings} className="btn-primary px-8 py-3 rounded-xl font-bold transition flex items-center gap-3 w-full justify-center">
+                                <i className="fa-solid fa-floppy-disk" /> Guardar todos los cambios
+                            </button>
                         </div>
                     </div>
                 );
             }
 
             // =============================================================
-            // 9. COMPONENTE: PANEL ADMIN (creación de cuentas funcional)
+            // 9. COMPONENTE: ADMIN (CREACIÓN POR CÓDIGO JS)
             // =============================================================
             function AdminPanel() {
-                const [email, setEmail] = React.useState('');
-                const [password, setPassword] = React.useState('');
-                const [serverType, setServerType] = React.useState('node');
-                const [version, setVersion] = React.useState('18');
-                const [loading, setLoading] = React.useState(false);
+                const [code, setCode] = React.useState('');
+                const [executing, setExecuting] = React.useState(false);
                 const [accounts, setAccounts] = React.useState([]);
                 const [loadingAccounts, setLoadingAccounts] = React.useState(true);
 
-                // Cargar cuentas desde Firestore
+                // Cargar cuentas
                 React.useEffect(() => {
                     const fetchAccounts = async () => {
                         try {
@@ -679,19 +780,44 @@
                     fetchAccounts();
                 }, []);
 
-                const handleCreate = async (e) => {
-                    e.preventDefault();
-                    setLoading(true);
+                // Código de ejemplo precargado (crea cuenta Prueba1)
+                const loadExampleCode = () => {
+                    const example = `// Código para crear una cuenta de usuario
+        // Modifica los valores y ejecuta
+        const accountData = {
+          email: "Prueba1@gmail.com",
+          password: "331", // En producción, usar hash
+          serverType: "node", // "node" o "python"
+          version: "18",
+          settings: {
+            botName: "MiBot",
+            port: "3000",
+            startup: "node bot.js",
+            packages: "express dotenv",
+            envVars: "TOKEN=123\\nCLIENT_ID=456"
+          }
+        };
+
+        // La función createAccount está disponible en el contexto
+        createAccount(accountData);`;
+                    setCode(example);
+                };
+
+                // Función que se expondrá al evaluar el código
+                const createAccount = async (data) => {
+                    if (!data.email || !data.password) {
+                        toast.error('Email y contraseña son obligatorios');
+                        return;
+                    }
                     try {
-                        // Crear documento en Firestore
                         const docRef = await db.collection('users').add({
-                            email,
-                            password, // En producción NUNCA guardar en texto plano
-                            serverType,
-                            version,
+                            email: data.email,
+                            password: data.password,
+                            serverType: data.serverType || 'node',
+                            version: data.version || '18',
                             createdAt: new Date().toISOString(),
                             files: [],
-                            settings: {
+                            settings: data.settings || {
                                 botName: '',
                                 port: '3000',
                                 startup: '',
@@ -699,9 +825,7 @@
                                 envVars: ''
                             }
                         });
-                        toast.success('Cuenta creada con éxito');
-                        setEmail('');
-                        setPassword('');
+                        toast.success(`Cuenta ${data.email} creada con éxito`);
                         // Recargar lista
                         const snapshot = await db.collection('users').get();
                         const list = [];
@@ -709,10 +833,30 @@
                             list.push({ id: doc.id, ...doc.data() });
                         });
                         setAccounts(list);
+                        return { success: true, id: docRef.id };
                     } catch (error) {
-                        toast.error('Error: ' + error.message);
+                        toast.error('Error al crear: ' + error.message);
+                        return { success: false, error: error.message };
+                    }
+                };
+
+                const executeCode = async () => {
+                    setExecuting(true);
+                    try {
+                        // Crear un contexto con la función createAccount
+                        const context = { createAccount };
+                        // Evaluar el código en ese contexto
+                        const func = new Function('context', `
+                            with (context) {
+                                ${code}
+                            }
+                        `);
+                        func(context);
+                        toast.success('Código ejecutado correctamente');
+                    } catch (err) {
+                        toast.error('Error en el código: ' + err.message);
                     } finally {
-                        setLoading(false);
+                        setExecuting(false);
                     }
                 };
 
@@ -731,24 +875,40 @@
 
                 return (
                     <div className="fade-in">
-                        <h1 className="text-3xl font-bold mb-6">Administración de Cuentas</h1>
+                        <h1 className="text-3xl font-bold mb-6">Administración por Código</h1>
+
                         <div className="glass-card mb-8 admin-section">
-                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><i className="fa-solid fa-user-plus text-green-400" /> Crear nueva cuenta</h2>
-                            <form onSubmit={handleCreate} className="space-y-4">
-                                <input type="email" placeholder="Correo electrónico" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-                                <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-                                <div className="flex flex-col md:flex-row gap-4">
-                                    <select value={serverType} onChange={(e) => setServerType(e.target.value)} className="flex-1 bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="node">Node.js</option><option value="python">Python</option>
-                                    </select>
-                                    <input type="text" placeholder="Versión (ej: 18, 3.10)" value={version} onChange={(e) => setVersion(e.target.value)} className="flex-1 bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                </div>
-                                <button type="submit" disabled={loading} className="w-full btn-success py-3 rounded-xl font-bold transition disabled:opacity-50 flex items-center justify-center gap-3">
-                                    {loading && <span className="spinner" />}
-                                    {loading ? 'Creando...' : <><i className="fa-solid fa-user-plus" /> Crear cuenta</>}
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><i className="fa-solid fa-code text-blue-400" /> Crear cuenta mediante código JS</h2>
+                            <p className="text-gray-400 text-sm mb-4">
+                                Escribe un código JavaScript que utilice la función <code className="bg-gray-700 px-1 rounded">createAccount(objeto)</code>.
+                                El objeto debe tener <strong>email</strong>, <strong>password</strong>, <strong>serverType</strong> (node/python), <strong>version</strong> y opcionalmente <strong>settings</strong>.
+                            </p>
+                            <div className="flex gap-3 mb-4">
+                                <button onClick={loadExampleCode} className="btn-warning px-4 py-2 rounded-xl font-bold transition flex items-center gap-2">
+                                    <i className="fa-solid fa-file-code" /> Cargar ejemplo (Prueba1)
                                 </button>
-                            </form>
+                                <button onClick={() => setCode('')} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-xl font-bold transition">
+                                    Limpiar
+                                </button>
+                            </div>
+                            <textarea
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                className="code-editor w-full"
+                                rows="12"
+                                placeholder="// Escribe aquí tu código JS..."
+                                spellCheck="false"
+                            />
+                            <button
+                                onClick={executeCode}
+                                disabled={executing}
+                                className="mt-4 btn-success px-8 py-3 rounded-xl font-bold transition disabled:opacity-50 flex items-center gap-3"
+                            >
+                                {executing && <span className="spinner" />}
+                                {executing ? 'Ejecutando...' : <><i className="fa-solid fa-play" /> Ejecutar código</>}
+                            </button>
                         </div>
+
                         <div className="glass-card">
                             <h3 className="text-xl font-semibold mb-4 flex items-center gap-2"><i className="fa-regular fa-users" /> Cuentas existentes ({accounts.length})</h3>
                             {accounts.length === 0 ? <p className="text-gray-500">No hay cuentas creadas.</p> :
