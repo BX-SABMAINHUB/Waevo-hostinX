@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waevo Hosting</title>
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome (iconos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Firebase (v9 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- React + ReactDOM (CDN) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel Standalone (para JSX en navegador) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- React Hot Toast (notificaciones) -->
+    <script src="https://cdn.jsdelivr.net/npm/react-hot-toast@2.4.1/standalone/index.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/react-hot-toast@2.4.1/index.min.css" />
+
+    <style>
+        /* Estilos personalizados */
+        body {
+            background: #111827;
+            color: #f3f4f6;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 8px;
+        }
+        .file-item:hover {
+            background: #374151;
+            transition: background 0.2s;
+        }
+        .log-info {
+            color: #60a5fa;
+        }
+        .log-warn {
+            color: #fbbf24;
+        }
+        .log-error {
+            color: #f87171;
+        }
+        .log-success {
+            color: #34d399;
+        }
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        .badge-js {
+            background: #f7df1e;
+            color: #000;
+        }
+        .badge-py {
+            background: #3776ab;
+            color: #fff;
+        }
+        .badge-json {
+            background: #f5a623;
+            color: #000;
+        }
+        .badge-html {
+            background: #e34f26;
+            color: #fff;
+        }
+        .badge-css {
+            background: #1572b6;
+            color: #fff;
+        }
+        .badge-md {
+            background: #083fa1;
+            color: #fff;
+        }
+        .badge-other {
+            background: #6b7280;
+            color: #fff;
+        }
+        /* Animación de carga */
+        .spinner {
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 2rem;
+            height: 2rem;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        /* Transiciones suaves */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Estilo para el botón + oculto */
+        .hidden-btn {
+            opacity: 0.15;
+            transition: opacity 0.3s;
+        }
+        .hidden-btn:hover {
+            opacity: 0.6;
+        }
+        /* Área de texto tipo editor */
+        .code-editor {
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            tab-size: 2;
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            resize: vertical;
+            min-height: 150px;
+            width: 100%;
+            outline: none;
+        }
+        .code-editor:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+        /* Tarjetas de estadísticas con efecto glass */
+        .stat-card {
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(4px);
+            border: 1px solid #374151;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        /* Barra de progreso personalizada */
+        .progress-bar {
+            height: 6px;
+            border-radius: 9999px;
+            background: #1f2937;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <!-- ============ TODO EL CÓDIGO JAVASCRIPT + JSX ============ -->
+    <script type="text/babel">
+        (function() {
+            'use strict';
+
+            // ----------------------------------------------------------
+            // 1. CONFIGURACIÓN DE FIREBASE (hardcodeada)
+            // ----------------------------------------------------------
+            const firebaseConfig = {
+                apiKey: "AIzaSyD13N4-9MjTrmlPwGP7mves0Exje4v2ACw",
+                authDomain: "kahoot-8529e.firebaseapp.com",
+                databaseURL: "https://kahoot-8529e-default-rtdb.firebaseio.com",
+                projectId: "kahoot-8529e",
+                storageBucket: "kahoot-8529e.firebasestorage.app",
+                messagingSenderId: "313414356056",
+                appId: "1:313414356056:web:4aab4587f7df9393008e2d",
+                measurementId: "G-8T4CPC1BQ3"
+            };
+
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            // ----------------------------------------------------------
+            // 2. CONTEXTO DE AUTENTICACIÓN
+            // ----------------------------------------------------------
+            const AuthContext = React.createContext({ user: null, loading: true });
+
+            function AuthProvider({ children }) {
+                const [user, setUser] = React.useState(null);
+                const [loading, setLoading] = React.useState(true);
+
+                React.useEffect(() => {
+                    const unsubscribe = auth.onAuthStateChanged((u) => {
+                        setUser(u);
+                        setLoading(false);
+                    });
+                    return unsubscribe;
+                }, []);
+
+                return React.createElement(
+                    AuthContext.Provider,
+                    { value: { user, loading } },
+                    children
+                );
+            }
+
+            function useAuth() {
+                return React.useContext(AuthContext);
+            }
+
+            // ----------------------------------------------------------
+            // 3. COMPONENTES PRINCIPALES
+            // ----------------------------------------------------------
+
+            // --- 3.1 Toast (notificaciones) ---
+            const toast = window.toast || { success: () => {}, error: () => {}, custom: () => {} };
+
+            // --- 3.2 Login ---
+            function LoginForm() {
+                const [email, setEmail] = React.useState('');
+                const [password, setPassword] = React.useState('');
+                const [loading, setLoading] = React.useState(false);
+
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    try {
+                        await auth.signInWithEmailAndPassword(email, password);
+                        window.location.hash = '#dashboard';
+                        toast.success('¡Bienvenido a Waevo Hosting!');
+                    } catch (err) {
+                        toast.error('Error: ' + err.message);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+
+                return React.createElement(
+                    'div',
+                    { className: 'min-h-screen flex items-center justify-center bg-gray-900 p-4' },
+                    React.createElement(
+                        'form',
+                        { onSubmit: handleSubmit, className: 'bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700 fade-in' },
+                        React.createElement(
+                            'div',
+                            { className: 'text-center mb-8' },
+                            React.createElement('h1', { className: 'text-4xl font-bold text-blue-400' }, 'Waevo'),
+                            React.createElement('h2', { className: 'text-2xl font-light text-gray-300' }, 'Hosting'),
+                            React.createElement('p', { className: 'text-gray-500 text-sm mt-2' }, 'Inicia sesión para gestionar tus bots')
+                        ),
+                        React.createElement('input', {
+                            type: 'email',
+                            placeholder: 'Correo electrónico',
+                            value: email,
+                            onChange: (e) => setEmail(e.target.value),
+                            className: 'w-full p-3 mb-4 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition',
+                            required: true
+                        }),
+                        React.createElement('input', {
+                            type: 'password',
+                            placeholder: 'Contraseña',
+                            value: password,
+                            onChange: (e) => setPassword(e.target.value),
+                            className: 'w-full p-3 mb-6 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition',
+                            required: true
+                        }),
+                        React.createElement(
+                            'button',
+                            {
+                                type: 'submit',
+                                disabled: loading,
+                                className: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                            },
+                            loading ? React.createElement('span', { className: 'spinner' }) : null,
+                            loading ? 'Cargando...' : 'Iniciar sesión'
+                        ),
+                        React.createElement(
+                            'p',
+                            { className: 'text-gray-500 text-xs text-center mt-6' },
+                            '¿No tienes cuenta? Contacta con el administrador.'
+                        )
+                    )
+                );
+            }
+
+            // --- 3.3 Layout del Dashboard con sidebar ---
+            function DashboardLayout({ children, currentPage, setPage }) {
+                const handleLogout = async () => {
+                    await auth.signOut();
+                    window.location.hash = '#login';
+                    toast.success('Sesión cerrada');
+                };
+
+                const navItems = [
+                    { id: 'dashboard', label: 'Panel', icon: 'fa-gauge-high' },
+                    { id: 'files', label: 'Archivos', icon: 'fa-folder' },
+                    { id: 'console', label: 'Consola', icon: 'fa-terminal' },
+                    { id: 'settings', label: 'Ajustes', icon: 'fa-sliders' }
+                ];
+
+                return React.createElement(
+                    'div',
+                    { className: 'min-h-screen bg-gray-900 text-white flex flex-col md:flex-row' },
+                    // Sidebar
+                    React.createElement(
+                        'aside',
+                        { className: 'w-full md:w-64 bg-gray-800 p-4 md:p-6 flex flex-row md:flex-col justify-between items-center md:items-stretch border-b md:border-b-0 md:border-r border-gray-700' },
+                        React.createElement(
+                            'div',
+                            { className: 'flex items-center gap-3 md:block' },
+                            React.createElement('h2', { className: 'text-2xl font-bold text-blue-400' }, 'Waevo'),
+                            React.createElement('span', { className: 'text-xs text-gray-500 hidden md:inline' }, 'Hosting')
+                        ),
+                        React.createElement(
+                            'nav',
+                            { className: 'flex md:flex-col gap-1 md:gap-2 w-full md:w-auto justify-center' },
+                            navItems.map(item =>
+                                React.createElement(
+                                    'button',
+                                    {
+                                        key: item.id,
+                                        onClick: () => { setPage(item.id);
+                                            window.location.hash = item.id; },
+                                        className: `flex items-center gap-3 px-4 py-2 rounded-lg transition ${currentPage === item.id ? 'bg-blue-600 text-white' : 'hover:bg-gray-700 text-gray-300'}`
+                                    },
+                                    React.createElement('i', { className: `fa-solid ${item.icon}` }),
+                                    React.createElement('span', { className: 'hidden md:inline' }, item.label)
+                                )
+                            )
+                        ),
+                        React.createElement(
+                            'button',
+                            { onClick: handleLogout, className: 'flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition text-sm' },
+                            React.createElement('i', { className: 'fa-solid fa-right-from-bracket' }),
+                            React.createElement('span', { className: 'hidden md:inline' }, 'Cerrar sesión')
+                        )
+                    ),
+                    // Contenido principal
+                    React.createElement(
+                        'main',
+                        { className: 'flex-1 p-4 md:p-8 overflow-y-auto max-h-screen' },
+                        children
+                    )
+                );
+            }
+
+            // --- 3.4 Dashboard (página principal) ---
+            function DashboardHome({ user }) {
+                const [serverInfo, setServerInfo] = React.useState(null);
+                const [loading, setLoading] = React.useState(true);
+
+                React.useEffect(() => {
+                    if (!user) return;
+                    const fetchServer = async () => {
+                        try {
+                            const docRef = db.collection('users').doc(user.uid).collection('data').doc('server');
+                            const docSnap = await docRef.get();
+                            if (docSnap.exists) {
+                                setServerInfo(docSnap.data());
+                            } else {
+                                // Crear datos por defecto
+                                const defaultData = { type: 'node', version: '18', createdAt: new Date().toISOString() };
+                                await docRef.set(defaultData);
+                                setServerInfo(defaultData);
+                            }
+                        } catch (err) {
+                            console.error(err);
+                        } finally {
+                            setLoading(false);
+                        }
+                    };
+                    fetchServer();
+                }, [user]);
+
+                if (loading) {
+                    return React.createElement('div', { className: 'flex items-center justify-center h-64' },
+                        React.createElement('span', { className: 'spinner' })
+                    );
+                }
+
+                return React.createElement(
+                    'div',
+                    { className: 'fade-in' },
+                    React.createElement('h1, { className: 'text-3xl font-bold mb-6' }, 'Panel de Control'),
+                    React.createElement(
+                        'div',
+                        { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        // Tarjeta de bienvenida
+                        React.createElement(
+                            'div',
+                            { className: 'bg-gray-800 p-6 rounded-2xl border border-gray-700' },
+                            React.createElement('p, { className: 'text-lg' }, 'Bienvenido, ',
+                                React.createElement('span, { className: 'text-blue-400 font-semibold' }, user?.email || 'Usuario')
+                            ),
+                            React.createElement('p, { className: 'text-gray-400 text-sm mt-2' }, 'Aquí tienes un resumen de tu servidor.')
+                        ),
+                        // Tarjeta de información del servidor
+                        React.createElement(
+                            'div',
+                            { className: 'bg-gray-800 p-6 rounded-2xl border border-gray-700' },
+                            React.createElement('h3, { className: 'text-xl font-semibold mb-4' }, 'Servidor'),
+                            React.createElement(
+                                'div',
+                                { className: 'space-y-2' },
+                                React.createElement('p, null,
+                                    React.createElement('span, { className: 'text-gray-400' }, 'Tipo: '),
+                                    React.createElement('span, { className: 'font-mono' }, serverInfo?.type === 'node' ? 'Node.js' : 'Python')
+                                ),
+                                React.createElement('p, null,
+                                    React.createElement('span, { className: 'text-gray-400' }, 'Versión: '),
+                                    React.createElement('span, { className: 'font-mono' }, serverInfo?.version || 'N/A')
+                                ),
+                                React.createElement('p, null,
+                                    React.createElement('span, { className: 'text-gray-400' }, 'Creado: '),
+                                    React.createElement('span, { className: 'font-mono' }, serverInfo?.createdAt ? new Date(serverInfo.createdAt).toLocaleDateString() : 'N/A')
+                                )
+                            )
+                        )
+                    ),
+                    // Botón de acceso rápido a consola
+                    React.createElement(
+                        'div',
+                        { className: 'mt-8' },
+                        React.createElement(
+                            'button,
+                            { onClick: () => { window.location.hash = 'console'; }, className: 'bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold transition flex items-center gap-2' },
+                            React.createElement('i', { className: 'fa-solid fa-arrow-right' }),
+                            'Ir a la consola'
+                        )
+                    )
+                );
+            }
+
+            // --- 3.5 Gestor de Archivos (mejorado) ---
+            function FileManager({ user }) {
+                const [files, setFiles] = React.useState([]);
+                const [newFile, setNewFile] = React.useState({ name: '', content: '', language: 'javascript' });
+                const [loading, setLoading] = React.useState(true);
+                const [githubUrl, setGithubUrl] = React.useState('');
+
+                // Cargar archivos desde Firestore
+                React.useEffect(() => {
+                    if (!user) return;
+                    const fetchFiles = async () => {
+                        try {
+                            const docRef = db.collection('users').doc(user.uid).collection('data').doc('files');
+                            const docSnap = await docRef.get();
+                            if (docSnap.exists) {
+                                setFiles(docSnap.data().files || []);
+                            } else {
+                                await docRef.set({ files: [] });
+                                setFiles([]);
+                            }
+                        } catch (err) {
+                            toast.error('Error al cargar archivos');
+                        } finally {
+                            setLoading(false);
+                        }
+                    };
+                    fetchFiles();
+                }, [user]);
+
+                const saveFiles = async (newFiles) => {
+                    if (!user) return;
+                    try {
+                        const docRef = db.collection('users').doc(user.uid).collection('data').doc('files');
+                        await docRef.set({ files: newFiles });
+                        setFiles(newFiles);
+                        toast.success('Archivos guardados');
+                    } catch (err) {
+                        toast.error('Error al guardar archivos');
+                    }
+                };
+
+                const addFile = async () => {
+                    if (!newFile.name.trim()) return toast.error('El nombre es obligatorio');
+                    const updated = [...files, { ...newFile }];
+                    await saveFiles(updated);
+                    setNewFile({ name: '', content: '', language: 'javascript' });
+                };
+
+                const deleteFile = async (index) => {
+                    const updated = files.filter((_, i) => i !== index);
+                    await saveFiles(updated);
+                };
+
+                const importFromGithub = async () => {
+                    if (!githubUrl.trim()) return toast.error('Introduce una URL de GitHub raw');
+                    try {
+                        const response = await fetch(githubUrl);
+                        if (!response.ok) throw new Error('Error al obtener el archivo');
+                        const content = await response.text();
+                        const filename = githubUrl.split('/').pop() || 'archivo.txt';
+                        const ext = filename.split('.').pop().toLowerCase();
+                        const langMap = {
+                            'js': 'javascript',
+                            'py': 'python',
+                            'json': 'json',
+                            'html': 'html',
+                            'css': 'css',
+                            'md': 'markdown'
+                        };
+                        const language = langMap[ext] || 'other';
+                        const updated = [...files, { name: filename, content, language }];
+                        await saveFiles(updated);
+                        setGithubUrl('');
+                        toast.success('Archivo importado desde GitHub');
+                    } catch (err) {
+                        toast.error('Error: ' + err.message);
+                    }
+                };
+
+                const handleFileUpload = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = async (ev) => {
+                        const content = ev.target.result;
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        const langMap = {
+                            'js': 'javascript',
+                            'py': 'python',
+                            'json': 'json',
+                            'html': 'html',
+                            'css': 'css',
+                            'md': 'markdown'
+                        };
+                        const language = langMap[ext] || 'other';
+                        const updated = [...files, { name: file.name, content, language }];
+                        await saveFiles(updated);
+                        toast.success('Archivo subido');
+                    };
+                    reader.readAsText(file);
+                    e.target.value = ''; // reset input
+                };
+
+                const getBadgeClass = (lang) => {
+                    const map = {
+                        'javascript': 'badge-js',
+                        'python': 'badge-py',
+                        'json': 'badge-json',
+                        'html': 'badge-html',
+                        'css': 'badge-css',
+                        'markdown': 'badge-md'
+                    };
+                    return map[lang] || 'badge-other';
+                };
+
+                if (loading) {
+                    return React.createElement('div', { className: 'flex items-center justify-center h-64' },
+                        React.createElement('span', { className: 'spinner' })
+                    );
+                }
+
+                return React.createElement(
+                    'div',
+                    { className: 'fade-in' },
+                    React.createElement('h1, { className: 'text-3xl font-bold mb-6' }, 'Gestor de Archivos'),
+                    // Panel de creación
+                    React.createElement(
+                        'div',
+                        { className: 'bg-gray-800 p-6 rounded-2xl border border-gray-700 mb-8' },
+                        React.createElement('h3, { className: 'text-xl font-semibold mb-4' }, 'Nuevo archivo'),
+                        React.createElement(
+                            'div',
+                            { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
+                            React.createElement('input', {
+                                type: 'text',
+                                placeholder: 'Nombre (ej: bot.js)',
+                                value: newFile.name,
+                                onChange: (e) => setNewFile({ ...newFile, name: e.target.value }),
+                                className: 'bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            }),
+                            React.createElement(
+                                'select',
+                                {
+                                    value: newFile.language,
+                                    onChange: (e) => setNewFile({ ...newFile, language: e.target.value }),
+                                    className: 'bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                },
+                                React.createElement('option', { value: 'javascript' }, 'JavaScript'),
+                                React.createElement('option', { value: 'python' }, 'Python'),
+                                React.createElement('option', { value: 'json' }, 'JSON'),
+                                React.createElement('option', { value: 'html' }, 'HTML'),
+                                React.createElement('option', { value: 'css' }, 'CSS'),
+                                React.createElement('option', { value: 'markdown' }, 'Markdown')
+                            ),
+                            React.createElement(
+                                'button',
+                                { onClick: addFile, className: 'bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition flex items-center justify-center gap-2' },
+                                React.createElement('i', { className: 'fa-solid fa-plus' }),
+                                'Crear archivo'
+                            )
+                        ),
+                        React.createElement('textarea', {
+                            placeholder: 'Contenido del archivo...',
+                            value: newFile.content,
+                            onChange: (e) => setNewFile({ ...newFile, content: e.target.value }),
+                            className: 'code-editor w-full mt-4'
+                        })
+                    ),
+                    // Importar desde GitHub
+                    React.createElement(
+                        'div',
+                        { className: 'bg-gray-800 p-6 rounded-2xl border border-gray-700 mb-8' },
+                        React.createElement('h3, { className: 'text-xl font-semibold mb-4' }, 'Importar desde GitHub'),
+                        React.createElement(
+                            'div',
+                            { className: 'flex flex-col md:flex-row gap-4' },
+                            React.createElement('input', {
+                                type: 'url',
+                                placeholder: 'URL raw del archivo (ej: https://raw.githubusercontent.com/.../bot.js)',
+                                value: githubUrl,
+                                onChange: (e) => setGithubUrl(e.target.value),
+                                className: 'flex-1 bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            }),
+                            React.createElement(
+                                'button',
+                                { onClick: importFromGithub, className: 'bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold transition flex items-center gap-2' },
+                                React.createElement('i', { className: 'fa-brands fa-github' }),
+                                'Importar'
+                            )
+                        )
+                    ),
+                    // Subir archivo local
+                    React.createElement(
+                        'div',
+                        { className: 'bg-gray-800 p-6 rounded-2xl border border-gray-700 mb-8' },
+                        React.createElement('h3, { className: 'text-xl font-semibold mb-4' }, 'Subir archivo local'),
+                        React.createElement('input', {
+                            type: 'file',
+                            onChange: handleFileUpload,
+                            className: 'block w-full text-sm text-gray-400 file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer'
+                        })
+                    ),
+                    // Lista de archivos
+                    React.createElement(
+                        'div',
+                        null,
+                        React.createElement('h3, { className: 'text-xl font-semibold mb-4' }, 'Archivos (' + files.length + ')'),
+                        files.length === 0 ?
+                        React.createElement('p, { className: 'text-gray-500' }, 'No hay archivos aún. Crea uno nuevo.') :
+                        React.createElement(
+                            'div',
+                            { className: 'space-y-2' },
+                            files.map((file, idx) =>
+                                React.createElement(
+                                    'div',
+                                    { key: idx, className: 'file-item bg-gray-800 p-4 rounded-lg border border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition' },
+                                    React.createElement(
+                                        'div',
+                                        { className: 'flex items-center gap-3 flex-wrap' },
+                                        React.createElement('i', { className: 'fa-regular fa-file text-gray-400' }),
+                                        React.createElement('span, { className: 'font-mono' }, file.name),
+                                        React.createElement('span, { className: `badge ${getBadgeClass(file.language)}` }, file.language || 'otros')
+                                    ),
+                                    React.createElement(
+                                        'div',
+                                        { className: 'flex gap-2' },
+                                        React.createElement(
+                                            'button,
+                                            { onClick: () => { /* Ver contenido (modal) */ }, className: 'text-gray-400 hover:text-white transition' },
+                                            React.createElement('i', { className: 'fa-regular fa-eye' })
+                                        ),
+                                        React.createElement(
+                                            'button,
+                                            { onClick: () => deleteFile(idx), className: 'text-red-400 hover:text-red-600 transition' },
+                                            React.createElement('i', { className: 'fa-regular fa-trash-can' })
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
+            }
+
+            // --- 3.6 Consola (con estadísticas reales y logs) ---
+            function ConsoleStats() {
+                const [isConnected, setIsConnected] = React.useState(false);
+                const [isLoading, setIsLoading] = React.useState(false);
+                const [stats, setStats] = React.useState({
+                    cpu: 0,
+                    ramUsed: 0,
+                    ramTotal: 1024,
+                    diskUsed: 0,
+                    diskTotal: 10,
+                    network: 0
+                });
+                const [logs, setLogs] = React.useState([
+                    { level: 'info', message: 'Servicio de consola desactivado' },
+                    { level: 'info', message: 'Conecta con Pterodactyl para ver logs reales' }
+                ]);
+                const [logInput, setLogInput] = React.useState('');
+
+                const handleConnect = async () => {
+                    setIsLoading(true);
+                    try {
+                        // Simulación de conexión fallida (para mostrar que está desactivado)
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        throw new Error('El servicio de consola no está disponible. Configura la API de Pterodactyl.');
+                    } catch (error) {
+                        toast.error(error.message || 'No se pudo conectar');
+                        setLogs(prev => [...prev, { level: 'error', message: error.message || 'Fallo de conexión' }]);
+                        setIsConnected(false);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+
+                const handleDisconnect = () => {
+                    setIsConnected(false);
+                    setStats({ cpu: 0, ramUsed: 0, ramTotal: 1024, diskUsed: 0, diskTotal: 10, network: 0 });
+                    setLogs([
+                        { level: 'info', message: 'Servicio de consola desactivado' },
+                        { level: 'info', message: 'Conecta con Pterodactyl para ver logs reales' }
+                    ]);
+                    toast.success('Consola desconectada');
+                };
+
+                // Simular logs adicionales (solo para demostración)
+                const sendTestLog = () => {
+                    if (!logInput.trim()) return;
+                    const level = logInput.startsWith('[ERROR]') ? 'error' :
+                        logInput.startsWith('[WARN]') ? 'warn' :
+                        logInput.startsWith('[SUCCESS]') ? 'success' : 'info';
+                    setLogs(prev => [...prev, { level, message: logInput }]);
+                    setLogInput('');
+                };
+
+                const getLogClass = (level) => {
+                    switch (level) {
+                        case 'info':
+                            return 'log-info';
+                        case 'warn':
+                            return 'log-warn';
+                        case 'error':
+                            return 'log-error';
+                        case 'success':
+                            return 'log-success';
+                        default:
+                            return '';
+                    }
+                };
+
+                return React.createElement(
+                    'div',
+                    { className: 'fade-in' },
+                    React.createElement(
+                        'div',
+                        { className: 'flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4' },
+                        React.createElement('h1, { className: 'text-3xl font-bold' }, 'Consola y Recursos'),
+                        React.createElement(
+                            'div',
+                            { className: 'flex gap-2' },
+                            !isConnected ?
+                            React.createElement(
+                                'button',
+                                {
+                                    onClick: handleConnect,
+                                    disabled: isLoading,
+                                    className: 'bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-bold transition disabled:opacity-50 flex items-center gap-2'
+                                },
+                                isLoading ? React.createElement('span', { className: 'spinner' }) : React.createElement('i', { className: 'fa-solid fa-plug' }),
+                                isLoading ? 'Conectando...' : 'Activar consola'
+                            ) :
+                            React.createElement(
+                                'button',
+                                { onClick: handleDisconnect, className: 'bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-bold transition flex items-center gap-2' },
+                                React.createElement('i', { className: 'fa-solid fa-power-off' }),
+                                'Desactivar'
+                            )
+                        )
+                    ),
+                    // Indicador de estado
+                    React.createElement(
+                        'div',
+                        { className: `mb-6 p-3 rounded-lg text-center font-bold ${isConnected ? 'bg-green-800 text-green-200' : 'bg-yellow-800 text-yellow-200'}` },
+                        isConnected ? '✅ Consola activa' : '⛔ Consola desactivada (sin conexión real)'
+                    ),
+                    // Estadísticas
+                    React.createElement(
+                        'div',
+                        { className: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8' },
+                        React.createElement(
+                            'div',
+                            { className: 'stat-card' },
+                            React.createElement('p, { className: 'text-gray-400 text-sm flex items-center gap-2' },
+                                React.createElement('i', { className: 'fa-solid fa-microchip' }),
+                                'CPU'
+                            ),
+                            React.createElement('p, { className: 'text-2xl font-bold' }, stats.cpu.toFixed(1) + '%'),
+                            React.createElement('div, { className: 'progress-bar' },
+                                React.createElement('div, { className: 'progress-fill', style: { width: stats.cpu + '%' } })
+                            )
+                        ),
+                        React.createElement(
+                            'div',
+                            { className: 'stat-card' },
+                            React.createElement('p, { className: 'text-gray-400 text-sm flex items-center gap-2' },
+                                React.createElement('i', { className: 'fa-solid fa-memory' }),
+                                'RAM'
+                            ),
+                            React.createElement('p, { className: 'text-2xl font-bold' }, stats.ramUsed + ' MB / ' + stats.ramTotal + ' MB'),
+                            React.createElement('div, { className: 'progress-bar' },
+                                React.createElement('div, { className: 'progress-fill', style: { width: ((stats.ramUsed / stats.ramTotal) * 100) + '%' } })
+                            )
+                        ),
+                        React.createElement(
+                            'div',
+                            { className: 'stat-card' },
+                            React.createElement('p, { className: 'text-gray-400 text-sm flex items-center gap-2' },
+                                React.createElement('i', { className: 'fa-solid fa-hard-drive' }),
+                                'Disco'
+                            ),
+                            React.createElement('p, { className: 'text-2xl font-bold' }, stats.diskUsed.toFixed(1) + ' GB / ' + stats.diskTotal + ' GB'),
+                            React.createElement('div, { className: 'progress-bar' },
+                                React.createElement('div, { className: 'progress-fill', style: { width: ((stats.diskUsed / stats.diskTotal) * 100) + '%' } })
+                            )
+                        ),
+                        React.createElement(
+                            'div',
+                            { className: 'stat-card' },
+                            React.createElement('p, { className: 'text-gray-400 text-sm flex items-center gap-2' },
+                                React.createElement('i', { className: 'fa-solid fa-network-wired' }),
+                                'Red'
+                            ),
+                            React.createElement('p, { className: 'text-2xl font-bold' }, stats.network.toFixed(1) + ' Mbps'),
+                            React.createElement('div, { className: 'progress-bar' },
+                                React.createElement('div, { className: 'progress-fill', style: { width: Math.min(stats.network * 10, 100) + '%' } })
+                            )
+                        )
+                    ),
+                    // Logs
+                    React.createElement(
+                        'div',
+                        { className: 'bg-black p-4 rounded-2xl border border-gray-700' },
+                        React.createElement('h3, { className: 'text-lg font-semibold mb-3 flex items-center gap-2' },
+                            React.createElement('i', { className: 'fa-solid fa-list-ul' }),
+                            'Logs'
+                        ),
+                        React.createElement(
+                            'div',
+                            { className: 'h-64 overflow-y-auto font-mono text-sm space-y-1' },
+                            logs.map((log, i) =>
+                                React.createElement('div', { key: i, className: `border-b border-gray-800 py-1 ${getLogClass(log.level)}` },
+                                    '[' + log.level.toUpperCase() + '] ' + log.message
+                                )
+                            )
+                        ),
+                        // Input para enviar logs de prueba (solo cuando está desconectado para demostración)
+                        !isConnected && React.createElement(
+                            'div',
+                            { className: 'mt-4 flex gap-2' },
+                            React.createElement('input', {
+                                type: 'text',
+                                placeholder: 'Escribe un log de prueba (ej: [ERROR] Algo falló)',
+                                value: logInput,
+                                onChange: (e) => setLogInput(e.target.value),
+                                className: 'flex-1 bg-gray-700 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            }),
+                            React.createElement(
+                                'button',
+                                { onClick: sendTestLog, className: 'bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition' },
+                                'Enviar'
+                            )
+                        )
+                    ),
+                    React.createElement(
+                        'p',
+                        { className: 'text-gray-500 text-sm mt-4' },
+                        '* La consola real requiere conexión con el panel de Pterodactyl. Actualmente está desactivada.'
+                    )
+                );
+            }
+
+            // --- 3.7 Ajustes (Settings) ---
+            function Settings({ user }) {
+                const [startup, setStartup] = React.useState('');
+                const [packages, setPackages] = React.useState('');
+                const [envVars, setEnvVars] = React.useState('');
+                const [loading, setLoading] = React.useState(true);
+
+                React.useEffect(() => {
+                    if (!user) return;
+                    const fetchSettings = async () => {
+                        try {
+                            const docRef = db.collection('users').doc(user.uid).collection('data').doc('settings');
+                            const docSnap = await docRef.get();
+                            if (docSnap.exists) {
+                                const data = docSnap.data();
+                                setStartup(data.startup || '');
+                                setPackages(data.packages || '');
+                                setEnvVars(data.envVars || '');
+                            }
+                        } catch (err) {
+                            toast.error('Error al cargar ajustes');
+                        } finally {
+                            setLoading(false);
+                        }
+                    };
+                    fetchSettings();
+                }, [user]);
+
+                const saveSettings = async () => {
+                    if (!user) return;
+                    try {
+                        const docRef = db.collection('users').doc(user.uid).collection('data').doc('settings');
+                        await docRef.set({ startup, packages, envVars });
+                        toast.success('Ajustes guardados');
+                    } catch (err) {
+                        toast.error('Error al guardar ajustes');
+                    }
+                };
+
+                if (loading) {
+                    return React.createElement('div', { className: 'flex items-center justify-center h-64' },
+                        React.createElement('span', { className: 'spinner' })
+                    );
+                }
+
+                return React.createElement(
+                    'div',
+                    { className: 'fade-in' },
+                    React.createElement('h1, { className: 'text-3xl font-bold mb-6' }, 'Ajustes'),
+                    React.createElement(
+                        'div',
+                        { className: 'bg-gray-800 p-6 rounded-2xl border border-gray-700 space-y-6' },
+                        React.createElement(
+                            'div',
+                            null,
+                            React.createElement('label, { className: 'block text-gray-400 mb-2' }, 'Comando de inicio (startup)'),
+                            React.createElement('input', {
+                                type: 'text',
+                                value: startup,
+                                onChange: (e) => setStartup(e.target.value),
+                                placeholder: 'Ej: node bot.js',
+                                className: 'w-full bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            }),
+                            React.createElement('p, { className: 'text-gray-500 text-xs mt-1' }, 'Comando que se ejecutará al iniciar el bot.')
+                        ),
+                        React.createElement(
+                            'div',
+                            null,
+                            React.createElement('label, { className: 'block text-gray-400 mb-2' }, 'Paquetes adicionales'),
+                            React.createElement('input', {
+                                type: 'text',
+                                value: packages,
+                                onChange: (e) => setPackages(e.target.value),
+                                placeholder: 'Ej: express dotenv',
+                                className: 'w-full bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            }),
+                            React.createElement('p, { className: 'text-gray-500 text-xs mt-1' }, 'Separados por espacio. Se instalarán con npm o pip.')
+                        ),
+                        React.createElement(
+                            'div',
+                            null,
+                            React.createElement('label, { className: 'block text-gray-400 mb-2' }, 'Variables de entorno'),
+                            React.createElement('textarea', {
+                                value: envVars,
+                                onChange: (e) => setEnvVars(e.target.value),
+                                placeholder: 'CLAVE=valor\nOTRA_CLAVE=otro_valor',
+                                className: 'code-editor w-full'
+                            }),
+                            React.createElement('p, { className: 'text-gray-500 text-xs mt-1' }, 'Una variable por línea, formato CLAVE=valor.')
+                        ),
+                        React.createElement(
+                            'button',
+                            { onClick: saveSettings, className: 'bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-bold transition flex items-center gap-2' },
+                            React.createElement('i', { className: 'fa-solid fa-floppy-disk' }),
+                            'Guardar todos los cambios'
+                        )
+                    )
+                );
+            }
+
+            // --- 3.8 Panel de Administración (crear cuentas) ---
+            function AdminPanel() {
+                const [email, setEmail] = React.useState('');
+                const [password, setPassword] = React.useState('');
+                const [serverType, setServerType] = React.useState('node');
+                const [version, setVersion] = React.useState('18');
+                const [loading, setLoading] = React.useState(false);
+
+                const handleCreate = async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    try {
+                        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+                        const uid = userCred.user.uid;
+                        // Guardar datos del servidor
+                        await db.collection('users').doc(uid).collection('data').doc('server').set({
+                            type: serverType,
+                            version,
+                            createdAt: new Date().toISOString()
+                        });
+                        await db.collection('users').doc(uid).collection('data').doc('files').set({ files: [] });
+                        await db.collection('users').doc(uid).collection('data').doc('settings').set({
+                            startup: '',
+                            packages: '',
+                            envVars: ''
+                        });
+                        toast.success('Cuenta creada con éxito');
+                        setEmail('');
+                        setPassword('');
+                    } catch (error) {
+                        toast.error(error.message);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+
+                return React.createElement(
+                    'div',
+                    { className: 'bg-gray-800 p-6 rounded-2xl border border-gray-700' },
+                    React.createElement('h2, { className: 'text-2xl font-bold mb-4 flex items-center gap-2' },
+                        React.createElement('i', { className: 'fa-solid fa-user-plus text-green-400' }),
+                        'Crear nueva cuenta de usuario'
+                    ),
+                    React.createElement(
+                        'form',
+                        { onSubmit: handleCreate, className: 'space-y-4' },
+                        React.createElement('input', {
+                            type: 'email',
+                            placeholder: 'Correo electrónico',
+                            value: email,
+                            onChange: (e) => setEmail(e.target.value),
+                            className: 'w-full bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            required: true
+                        }),
+                        React.createElement('input', {
+                            type: 'password',
+                            placeholder: 'Contraseña',
+                            value: password,
+                            onChange: (e) => setPassword(e.target.value),
+                            className: 'w-full bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            required: true
+                        }),
+                        React.createElement(
+                            'div',
+                            { className: 'flex flex-col md:flex-row gap-4' },
+                            React.createElement(
+                                'select',
+                                {
+                                    value: serverType,
+                                    onChange: (e) => setServerType(e.target.value),
+                                    className: 'flex-1 bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                },
+                                React.createElement('option', { value: 'node' }, 'Node.js'),
+                                React.createElement('option', { value: 'python' }, 'Python')
+                            ),
+                            React.createElement('input', {
+                                type: 'text',
+                                placeholder: 'Versión (ej: 18, 3.10)',
+                                value: version,
+                                onChange: (e) => setVersion(e.target.value),
+                                className: 'flex-1 bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            })
+                        ),
+                        React.createElement(
+                            'button',
+                            {
+                                type: 'submit',
+                                disabled: loading,
+                                className: 'w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold transition disabled:opacity-50 flex items-center justify-center gap-2'
+                            },
+                            loading ? React.createElement('span', { className: 'spinner' }) : React.createElement('i', { className: 'fa-solid fa-user-plus' }),
+                            loading ? 'Creando...' : 'Crear cuenta'
+                        )
+                    )
+                );
+            }
+
+            // --- 3.9 Página de Administración (oculta) ---
+            function AdminPage() {
+                const [unlocked, setUnlocked] = React.useState(false);
+                const [passwordInput, setPasswordInput] = React.useState('');
+                const [showPrompt, setShowPrompt] = React.useState(false);
+
+                const handlePlusClick = () => setShowPrompt(true);
+                const checkPassword = () => {
+                    if (passwordInput === 'Alex27Junio') {
+                        setUnlocked(true);
+                        setShowPrompt(false);
+                        setPasswordInput('');
+                        toast.success('Acceso concedido');
+                    } else {
+                        toast.error('Contraseña incorrecta');
+                    }
+                };
+
+                return React.createElement(
+                    'div',
+                    { className: 'min-h-screen bg-gray-900 text-white p-8' },
+                    // Botón "+" oculto
+                    React.createElement(
+                        'button',
+                        {
+                            onClick: handlePlusClick,
+                            className: 'fixed bottom-6 right-6 text-4xl font-bold hidden-btn',
+                            style: { opacity: 0.15 }
+                        },
+                        '+'
+                    ),
+                    // Prompt de contraseña
+                    showPrompt && React.createElement(
+                        'div',
+                        { className: 'fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 fade-in' },
+                        React.createElement(
+                            'div',
+                            { className: 'bg-gray-800 p-8 rounded-2xl border border-gray-700 max-w-md w-full' },
+                            React.createElement('h2, { className: 'text-2xl font-bold mb-4' }, 'Acceso al panel de administración'),
+                            React.createElement('p, { className: 'text-gray-400 mb-4' }, 'Introduce la contraseña para continuar.'),
+                            React.createElement('input', {
+                                type: 'password',
+                                value: passwordInput,
+                                onChange: (e) => setPasswordInput(e.target.value),
+                                placeholder: 'Contraseña',
+                                className: 'w-full bg-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4',
+                                onKeyDown: (e) => e.key === 'Enter' && checkPassword()
+                            }),
+                            React.createElement(
+                                'div',
+                                { className: 'flex gap-3' },
+                                React.createElement(
+                                    'button',
+                                    { onClick: checkPassword, className: 'flex-1 bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition' },
+                                    'Validar'
+                                ),
+                                React.createElement(
+                                    'button',
+                                    { onClick: () => setShowPrompt(false), className: 'flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg font-bold transition' },
+                                    'Cancelar'
+                                )
+                            )
+                        )
+                    ),
+                    // Panel de administración (visible solo si unlocked)
+                    unlocked && React.createElement(
+                        'div',
+                        { className: 'max-w-4xl mx-auto mt-8 fade-in' },
+                        React.createElement('h1, { className: 'text-4xl font-bold mb-8 text-center' }, 'Panel de Administración'),
+                        React.createElement(AdminPanel, null),
+                        React.createElement(
+                            'p',
+                            { className: 'text-gray-500 text-sm text-center mt-6' },
+                            'Desde aquí puedes crear nuevas cuentas de usuario para el hosting.'
+                        )
+                    )
+                );
+            }
+
+            // ----------------------------------------------------------
+            // 4. APLICACIÓN PRINCIPAL (enrutamiento por hash)
+            // ----------------------------------------------------------
+            function App() {
+                const { user, loading } = useAuth();
+                const [page, setPage] = React.useState('login');
+
+                // Sincronizar con hash de URL
+                React.useEffect(() => {
+                    const handleHash = () => {
+                        const hash = window.location.hash.replace('#', '');
+                        if (['dashboard', 'files', 'console', 'settings'].includes(hash)) {
+                            setPage(hash);
+                        } else if (hash === 'admin') {
+                            setPage('admin');
+                        } else {
+                            setPage('login');
+                        }
+                    };
+                    window.addEventListener('hashchange', handleHash);
+                    handleHash();
+                    return () => window.removeEventListener('hashchange', handleHash);
+                }, []);
+
+                // Si cargando, mostrar spinner
+                if (loading) {
+                    return React.createElement('div', { className: 'min-h-screen bg-gray-900 text-white flex items-center justify-center' },
+                        React.createElement('span', { className: 'spinner' })
+                    );
+                }
+
+                // Si no hay usuario y no estamos en admin, mostrar login
+                if (!user && page !== 'admin') {
+                    return React.createElement(LoginForm, null);
+                }
+
+                // Página de admin (accesible sin login)
+                if (page === 'admin') {
+                    return React.createElement(AdminPage, null);
+                }
+
+                // Dashboard protegido
+                let content;
+                switch (page) {
+                    case 'dashboard':
+                        content = React.createElement(DashboardHome, { user });
+                        break;
+                    case 'files':
+                        content = React.createElement(FileManager, { user });
+                        break;
+                    case 'console':
+                        content = React.createElement(ConsoleStats, null);
+                        break;
+                    case 'settings':
+                        content = React.createElement(Settings, { user });
+                        break;
+                    default:
+                        content = React.createElement('div', null, 'Página no encontrada');
+                }
+
+                return React.createElement(
+                    DashboardLayout,
+                    { currentPage: page, setPage: setPage },
+                    content
+                );
+            }
+
+            // ----------------------------------------------------------
+            // 5. RENDER
+            // ----------------------------------------------------------
+            const rootElement = document.getElementById('root');
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(
+                React.createElement(
+                    AuthProvider,
+                    null,
+                    React.createElement(App, null)
+                )
+            );
+
+        })();
+    </script>
+
+    <!-- Inicializar Toast (para notificaciones) -->
+    <script>
+        // React Hot Toast ya está cargado desde CDN, pero necesitamos exponerlo globalmente
+        (function() {
+            // El script de toast se carga de forma asíncrona, pero aquí ya está disponible
+            if (typeof toast !== 'undefined') {
+                // Ya existe
+            } else {
+                // Si no, definimos un fallback
+                window.toast = {
+                    success: (msg) => alert('✅ ' + msg),
+                    error: (msg) => alert('❌ ' + msg),
+                    custom: (msg) => alert('📢 ' + msg)
+                };
+            }
+        })();
+    </script>
+
+</body>
+</html>
