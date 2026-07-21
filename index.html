@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Waevo Hosting</title>
+    <title>Waevo Hosting - Panel de Administración</title>
 
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,16 +11,15 @@
     <!-- Font Awesome (iconos) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
-    <!-- Firebase (v9 compat) -->
+    <!-- Firebase (solo Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    <!-- React + ReactDOM (CDN) -->
+    <!-- React + ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-    <!-- Babel Standalone (para JSX en navegador) -->
+    <!-- Babel Standalone (para JSX) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- React Hot Toast (notificaciones) -->
@@ -28,7 +27,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/react-hot-toast@2.4.1/index.min.css" />
 
     <style>
-        /* ===== ESTILOS GLOBALES ===== */
+        /* ============================================================
+               ESTILOS GLOBALES
+               ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -43,7 +44,6 @@
             align-items: center;
             justify-content: center;
         }
-        /* Scroll personalizado */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -176,17 +176,6 @@
             transition: width 0.6s ease;
         }
 
-        /* Botón oculto + */
-        .hidden-btn {
-            opacity: 0.12;
-            transition: opacity 0.3s;
-            cursor: pointer;
-            user-select: none;
-        }
-        .hidden-btn:hover {
-            opacity: 0.6;
-        }
-
         /* Logs */
         .log-info {
             color: #60a5fa;
@@ -212,6 +201,11 @@
         .file-item:hover {
             background: #1e293b;
         }
+
+        /* Panel de admin */
+        .admin-section {
+            border-left: 4px solid #3b82f6;
+        }
     </style>
 </head>
 <body>
@@ -226,7 +220,7 @@
             'use strict';
 
             // =============================================================
-            // 1.  CONFIGURACIÓN DE FIREBASE (hardcodeada)
+            // 1. CONFIGURACIÓN DE FIREBASE (solo Firestore)
             // =============================================================
             const firebaseConfig = {
                 apiKey: "AIzaSyD13N4-9MjTrmlPwGP7mves0Exje4v2ACw",
@@ -239,41 +233,11 @@
                 measurementId: "G-8T4CPC1BQ3"
             };
 
-            // Inicializar Firebase (usando compat)
             firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
             const db = firebase.firestore();
 
             // =============================================================
-            // 2.  CONTEXTO DE AUTENTICACIÓN
-            // =============================================================
-            const AuthContext = React.createContext({ user: null, loading: true });
-
-            function AuthProvider({ children }) {
-                const [user, setUser] = React.useState(null);
-                const [loading, setLoading] = React.useState(true);
-
-                React.useEffect(() => {
-                    const unsubscribe = auth.onAuthStateChanged((u) => {
-                        setUser(u);
-                        setLoading(false);
-                    });
-                    return unsubscribe;
-                }, []);
-
-                return React.createElement(
-                    AuthContext.Provider,
-                    { value: { user, loading } },
-                    children
-                );
-            }
-
-            function useAuth() {
-                return React.useContext(AuthContext);
-            }
-
-            // =============================================================
-            // 3.  TOAST (notificaciones) - fallback si no carga
+            // 2. TOAST (notificaciones)
             // =============================================================
             const toast = window.toast || {
                 success: (msg) => alert('✅ ' + msg),
@@ -282,246 +246,194 @@
             };
 
             // =============================================================
-            // 4.  COMPONENTE: LOGIN
+            // 3. COMPONENTE: LOGIN (con credenciales fijas)
             // =============================================================
-            function LoginForm() {
+            function LoginForm({ onLogin }) {
                 const [email, setEmail] = React.useState('');
                 const [password, setPassword] = React.useState('');
                 const [loading, setLoading] = React.useState(false);
+                const [error, setError] = React.useState('');
 
-                const handleSubmit = async (e) => {
+                const handleSubmit = (e) => {
                     e.preventDefault();
                     setLoading(true);
-                    try {
-                        await auth.signInWithEmailAndPassword(email, password);
-                        window.location.hash = '#dashboard';
-                        toast.success('¡Bienvenido a Waevo Hosting!');
-                    } catch (err) {
-                        toast.error('Error: ' + err.message);
-                    } finally {
-                        setLoading(false);
+                    setError('');
+
+                    // Validación de credenciales fijas
+                    if (email === 'alexsanchezfollia@gmail.com' && password === 'Alex27Junio') {
+                        setTimeout(() => {
+                            setLoading(false);
+                            toast.success('¡Bienvenido, administrador!');
+                            onLogin(); // Notifica al padre que el login fue exitoso
+                        }, 500);
+                    } else {
+                        setTimeout(() => {
+                            setLoading(false);
+                            setError('Credenciales incorrectas. Solo el administrador puede acceder.');
+                            toast.error('Credenciales inválidas');
+                        }, 500);
                     }
                 };
 
                 return (
                     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
                         <form
-                        onSubmit={handleSubmit}
-                        className="bg-gray-800/80 backdrop-blur-md p-8 rounded-3xl shadow-2xl w-full max-w-md border border-gray-700 fade-in"
+                            onSubmit={handleSubmit}
+                            className="bg-gray-800/80 backdrop-blur-md p-8 rounded-3xl shadow-2xl w-full max-w-md border border-gray-700 fade-in"
                         >
-                        <div className="text-center mb-8">
-                            <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                            Waevo
-                            </h1>
-                            <h2 className="text-2xl font-light text-gray-300 mt-1">Hosting</h2>
-                            <p className="text-gray-500 text-sm mt-3">
-                            Inicia sesión para gestionar tus bots de Discord
+                            <div className="text-center mb-8">
+                                <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                                    Waevo
+                                </h1>
+                                <h2 className="text-2xl font-light text-gray-300 mt-1">Hosting</h2>
+                                <p className="text-gray-500 text-sm mt-3">
+                                    Panel de administración - Acceso restringido
+                                </p>
+                            </div>
+
+                            {error && (
+                                <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-xl text-red-200 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            <input
+                                type="email"
+                                placeholder="Correo electrónico"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full p-3 mb-4 bg-gray-700/70 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                required
+                            />
+                            <input
+                                type="password"
+                                placeholder="Contraseña"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full p-3 mb-6 bg-gray-700/70 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                required
+                            />
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                            >
+                                {loading && <span className="spinner" />}
+                                {loading ? 'Verificando...' : 'Iniciar sesión'}
+                            </button>
+
+                            <p className="text-gray-500 text-xs text-center mt-6">
+                                Solo el administrador tiene acceso a este panel.
                             </p>
-                        </div>
-
-                        <input
-                            type="email"
-                            placeholder="Correo electrónico"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-3 mb-4 bg-gray-700/70 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                            required
-                        />
-                        <input
-                            type="password"
-                            placeholder="Contraseña"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-3 mb-6 bg-gray-700/70 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                            required
-                        />
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                        >
-                            {loading && <span className="spinner" />}
-                            {loading ? 'Cargando...' : 'Iniciar sesión'}
-                        </button>
-
-                        <p className="text-gray-500 text-xs text-center mt-6">
-                            ¿No tienes cuenta? Contacta con el administrador.
-                        </p>
                         </form>
                     </div>
                 );
             }
 
             // =============================================================
-            // 5.  COMPONENTE: DASHBOARD LAYOUT (sidebar)
+            // 4. COMPONENTE: DASHBOARD LAYOUT (sidebar)
             // =============================================================
-            function DashboardLayout({ children, currentPage, setPage }) {
-                const handleLogout = async () => {
-                    await auth.signOut();
-                    window.location.hash = '#login';
-                    toast.success('Sesión cerrada');
-                };
-
+            function DashboardLayout({ children, currentPage, setPage, onLogout }) {
                 const navItems = [
                     { id: 'dashboard', label: 'Panel', icon: 'fa-gauge-high' },
                     { id: 'files', label: 'Archivos', icon: 'fa-folder' },
                     { id: 'console', label: 'Consola', icon: 'fa-terminal' },
-                    { id: 'settings', label: 'Ajustes', icon: 'fa-sliders' }
+                    { id: 'settings', label: 'Ajustes', icon: 'fa-sliders' },
+                    { id: 'admin', label: 'Admin', icon: 'fa-user-shield' }
                 ];
 
                 return (
                     <div className="min-h-screen bg-gray-900 text-white flex flex-col md:flex-row">
                         {/* Sidebar */}
                         <aside className="w-full md:w-64 bg-gray-800/80 backdrop-blur-sm p-4 md:p-6 flex flex-row md:flex-col justify-between items-center md:items-stretch border-b md:border-b-0 md:border-r border-gray-700">
-                        <div className="flex items-center gap-3 md:block">
-                            <h2 className="text-2xl font-bold text-blue-400">Waevo</h2>
-                            <span className="text-xs text-gray-500 hidden md:inline">Hosting</span>
-                        </div>
+                            <div className="flex items-center gap-3 md:block">
+                                <h2 className="text-2xl font-bold text-blue-400">Waevo</h2>
+                                <span className="text-xs text-gray-500 hidden md:inline">Hosting</span>
+                            </div>
 
-                        <nav className="flex md:flex-col gap-1 md:gap-2 w-full md:w-auto justify-center">
-                            {navItems.map((item) => (
+                            <nav className="flex md:flex-col gap-1 md:gap-2 w-full md:w-auto justify-center">
+                                {navItems.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => {
+                                            setPage(item.id);
+                                            window.location.hash = item.id;
+                                        }}
+                                        className={`flex items-center gap-3 px-4 py-2 rounded-xl transition ${
+                                            currentPage === item.id
+                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                                : 'hover:bg-gray-700 text-gray-300'
+                                        }`}
+                                    >
+                                        <i className={`fa-solid ${item.icon}`} />
+                                        <span className="hidden md:inline">{item.label}</span>
+                                    </button>
+                                ))}
+                            </nav>
+
                             <button
-                                key={item.id}
-                                onClick={() => {
-                                setPage(item.id);
-                                window.location.hash = item.id;
-                                }}
-                                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition ${
-                                currentPage === item.id
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                                    : 'hover:bg-gray-700 text-gray-300'
-                                }`}
+                                onClick={onLogout}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600/80 hover:bg-red-700 rounded-xl transition text-sm"
                             >
-                                <i className={`fa-solid ${item.icon}`} />
-                                <span className="hidden md:inline">{item.label}</span>
+                                <i className="fa-solid fa-right-from-bracket" />
+                                <span className="hidden md:inline">Cerrar sesión</span>
                             </button>
-                            ))}
-                        </nav>
-
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600/80 hover:bg-red-700 rounded-xl transition text-sm"
-                        >
-                            <i className="fa-solid fa-right-from-bracket" />
-                            <span className="hidden md:inline">Cerrar sesión</span>
-                        </button>
                         </aside>
 
                         {/* Contenido principal */}
                         <main className="flex-1 p-4 md:p-8 overflow-y-auto max-h-screen">
-                        {children}
+                            {children}
                         </main>
                     </div>
                 );
             }
 
             // =============================================================
-            // 6.  COMPONENTE: DASHBOARD HOME
+            // 5. COMPONENTE: DASHBOARD HOME (resumen)
             // =============================================================
-            function DashboardHome({ user }) {
-                const [serverInfo, setServerInfo] = React.useState(null);
-                const [loading, setLoading] = React.useState(true);
-
-                React.useEffect(() => {
-                    if (!user) return;
-                    const fetchServer = async () => {
-                        try {
-                            const docRef = db.collection('users').doc(user.uid).collection('data').doc('server');
-                            const docSnap = await docRef.get();
-                            if (docSnap.exists) {
-                                setServerInfo(docSnap.data());
-                            } else {
-                                const defaultData = {
-                                    type: 'node',
-                                    version: '18',
-                                    createdAt: new Date().toISOString()
-                                };
-                                await docRef.set(defaultData);
-                                setServerInfo(defaultData);
-                            }
-                        } catch (err) {
-                            toast.error('Error al cargar el servidor');
-                        } finally {
-                            setLoading(false);
-                        }
-                    };
-                    fetchServer();
-                }, [user]);
-
-                if (loading) {
-                    return (
-                        <div className="flex items-center justify-center h-64">
-                        <span className="spinner" />
-                        </div>
-                    );
-                }
-
+            function DashboardHome() {
                 return (
                     <div className="fade-in">
-                    <h1 className="text-3xl font-bold mb-6">Panel de Control</h1>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Tarjeta de bienvenida */}
-                        <div className="glass-card">
-                        <p className="text-lg">
-                            Bienvenido,{' '}
-                            <span className="text-blue-400 font-semibold">{user?.email || 'Usuario'}</span>
-                        </p>
-                        <p className="text-gray-400 text-sm mt-2">
-                            Aquí tienes un resumen de tu servidor de bots.
-                        </p>
+                        <h1 className="text-3xl font-bold mb-6">Panel de Control</h1>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="glass-card">
+                                <p className="text-lg">
+                                    Bienvenido, <span className="text-blue-400 font-semibold">Administrador</span>
+                                </p>
+                                <p className="text-gray-400 text-sm mt-2">
+                                    Este es el panel de control de Waevo Hosting.
+                                </p>
+                            </div>
+                            <div className="glass-card">
+                                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                    <i className="fa-solid fa-server text-blue-400" />
+                                    Servidor
+                                </h3>
+                                <div className="space-y-2">
+                                    <p><span className="text-gray-400">Estado: </span><span className="text-green-400">● Activo</span></p>
+                                    <p><span className="text-gray-400">Versión del panel: </span><span className="font-mono">v2.0.0</span></p>
+                                    <p><span className="text-gray-400">Bots alojados: </span><span className="font-mono">0</span></p>
+                                </div>
+                            </div>
                         </div>
-
-                        {/* Tarjeta de información del servidor */}
-                        <div className="glass-card">
-                        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                            <i className="fa-solid fa-server text-blue-400" />
-                            Servidor
-                        </h3>
-                        <div className="space-y-2">
-                            <p>
-                            <span className="text-gray-400">Tipo: </span>
-                            <span className="font-mono">
-                                {serverInfo?.type === 'node' ? 'Node.js' : 'Python'}
-                            </span>
-                            </p>
-                            <p>
-                            <span className="text-gray-400">Versión: </span>
-                            <span className="font-mono">{serverInfo?.version || 'N/A'}</span>
-                            </p>
-                            <p>
-                            <span className="text-gray-400">Creado: </span>
-                            <span className="font-mono">
-                                {serverInfo?.createdAt
-                                ? new Date(serverInfo.createdAt).toLocaleDateString()
-                                : 'N/A'}
-                            </span>
-                            </p>
+                        <div className="mt-8">
+                            <button
+                                onClick={() => { window.location.hash = 'admin'; }}
+                                className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-bold transition flex items-center gap-3 shadow-lg shadow-blue-600/20"
+                            >
+                                <i className="fa-solid fa-user-plus" />
+                                Ir al panel de administración (crear cuentas)
+                            </button>
                         </div>
-                        </div>
-                    </div>
-
-                    {/* Acceso rápido */}
-                    <div className="mt-8">
-                        <button
-                        onClick={() => {
-                            window.location.hash = 'console';
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-bold transition flex items-center gap-3 shadow-lg shadow-blue-600/20"
-                        >
-                        <i className="fa-solid fa-arrow-right" />
-                        Ir a la consola
-                        </button>
-                    </div>
                     </div>
                 );
             }
 
             // =============================================================
-            // 7.  COMPONENTE: GESTOR DE ARCHIVOS (FileManager)
+            // 6. COMPONENTE: GESTOR DE ARCHIVOS (FileManager)
             // =============================================================
-            function FileManager({ user }) {
+            function FileManager() {
                 const [files, setFiles] = React.useState([]);
                 const [newFile, setNewFile] = React.useState({
                     name: '',
@@ -532,48 +444,33 @@
                 const [githubUrl, setGithubUrl] = React.useState('');
 
                 React.useEffect(() => {
-                    if (!user) return;
-                    const fetchFiles = async () => {
+                    const stored = localStorage.getItem('waevo_files');
+                    if (stored) {
                         try {
-                            const docRef = db.collection('users').doc(user.uid).collection('data').doc('files');
-                            const docSnap = await docRef.get();
-                            if (docSnap.exists) {
-                                setFiles(docSnap.data().files || []);
-                            } else {
-                                await docRef.set({ files: [] });
-                                setFiles([]);
-                            }
-                        } catch (err) {
-                            toast.error('Error al cargar archivos');
-                        } finally {
-                            setLoading(false);
+                            setFiles(JSON.parse(stored));
+                        } catch (e) {
+                            setFiles([]);
                         }
-                    };
-                    fetchFiles();
-                }, [user]);
-
-                const saveFiles = async (newFiles) => {
-                    if (!user) return;
-                    try {
-                        const docRef = db.collection('users').doc(user.uid).collection('data').doc('files');
-                        await docRef.set({ files: newFiles });
-                        setFiles(newFiles);
-                        toast.success('Archivos guardados');
-                    } catch (err) {
-                        toast.error('Error al guardar archivos');
                     }
+                    setLoading(false);
+                }, []);
+
+                const saveFiles = (newFiles) => {
+                    setFiles(newFiles);
+                    localStorage.setItem('waevo_files', JSON.stringify(newFiles));
+                    toast.success('Archivos guardados');
                 };
 
-                const addFile = async () => {
+                const addFile = () => {
                     if (!newFile.name.trim()) return toast.error('El nombre es obligatorio');
                     const updated = [...files, { ...newFile }];
-                    await saveFiles(updated);
+                    saveFiles(updated);
                     setNewFile({ name: '', content: '', language: 'javascript' });
                 };
 
-                const deleteFile = async (index) => {
+                const deleteFile = (index) => {
                     const updated = files.filter((_, i) => i !== index);
-                    await saveFiles(updated);
+                    saveFiles(updated);
                 };
 
                 const importFromGithub = async () => {
@@ -594,7 +491,7 @@
                         };
                         const language = langMap[ext] || 'other';
                         const updated = [...files, { name: filename, content, language }];
-                        await saveFiles(updated);
+                        saveFiles(updated);
                         setGithubUrl('');
                         toast.success('Archivo importado desde GitHub');
                     } catch (err) {
@@ -606,7 +503,7 @@
                     const file = e.target.files[0];
                     if (!file) return;
                     const reader = new FileReader();
-                    reader.onload = async (ev) => {
+                    reader.onload = (ev) => {
                         const content = ev.target.result;
                         const ext = file.name.split('.').pop().toLowerCase();
                         const langMap = {
@@ -619,7 +516,7 @@
                         };
                         const language = langMap[ext] || 'other';
                         const updated = [...files, { name: file.name, content, language }];
-                        await saveFiles(updated);
+                        saveFiles(updated);
                         toast.success('Archivo subido');
                     };
                     reader.readAsText(file);
@@ -641,143 +538,142 @@
                 if (loading) {
                     return (
                         <div className="flex items-center justify-center h-64">
-                        <span className="spinner" />
+                            <span className="spinner" />
                         </div>
                     );
                 }
 
                 return (
                     <div className="fade-in">
-                    <h1 className="text-3xl font-bold mb-6">Gestor de Archivos</h1>
+                        <h1 className="text-3xl font-bold mb-6">Gestor de Archivos</h1>
 
-                    {/* Crear nuevo archivo */}
-                    <div className="glass-card mb-8">
-                        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <i className="fa-solid fa-plus-circle text-blue-400" />
-                        Nuevo archivo
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input
-                            type="text"
-                            placeholder="Nombre (ej: bot.js)"
-                            value={newFile.name}
-                            onChange={(e) => setNewFile({ ...newFile, name: e.target.value })}
-                            className="bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <select
-                            value={newFile.language}
-                            onChange={(e) => setNewFile({ ...newFile, language: e.target.value })}
-                            className="bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="javascript">JavaScript</option>
-                            <option value="python">Python</option>
-                            <option value="json">JSON</option>
-                            <option value="html">HTML</option>
-                            <option value="css">CSS</option>
-                            <option value="markdown">Markdown</option>
-                        </select>
-                        <button
-                            onClick={addFile}
-                            className="bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
-                        >
-                            <i className="fa-solid fa-plus" />
-                            Crear archivo
-                        </button>
-                        </div>
-                        <textarea
-                        placeholder="Contenido del archivo..."
-                        value={newFile.content}
-                        onChange={(e) => setNewFile({ ...newFile, content: e.target.value })}
-                        className="code-editor w-full mt-4"
-                        />
-                    </div>
-
-                    {/* Importar desde GitHub */}
-                    <div className="glass-card mb-8">
-                        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <i className="fa-brands fa-github text-purple-400" />
-                        Importar desde GitHub
-                        </h3>
-                        <div className="flex flex-col md:flex-row gap-4">
-                        <input
-                            type="url"
-                            placeholder="URL raw (ej: https://raw.githubusercontent.com/.../bot.js)"
-                            value={githubUrl}
-                            onChange={(e) => setGithubUrl(e.target.value)}
-                            className="flex-1 bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <button
-                            onClick={importFromGithub}
-                            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-bold transition flex items-center gap-2"
-                        >
-                            <i className="fa-solid fa-cloud-arrow-down" />
-                            Importar
-                        </button>
-                        </div>
-                    </div>
-
-                    {/* Subir archivo local */}
-                    <div className="glass-card mb-8">
-                        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <i className="fa-solid fa-upload text-green-400" />
-                        Subir archivo local
-                        </h3>
-                        <input
-                        type="file"
-                        onChange={handleFileUpload}
-                        className="block w-full text-sm text-gray-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
-                        />
-                    </div>
-
-                    {/* Lista de archivos */}
-                    <div>
-                        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <i className="fa-regular fa-folder-open" />
-                        Archivos ({files.length})
-                        </h3>
-                        {files.length === 0 ? (
-                        <p className="text-gray-500">No hay archivos aún. Crea uno nuevo.</p>
-                        ) : (
-                        <div className="space-y-2">
-                            {files.map((file, idx) => (
-                            <div key={idx} className="file-item flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                                <div className="flex items-center gap-3 flex-wrap">
-                                <i className="fa-regular fa-file text-gray-400" />
-                                <span className="font-mono">{file.name}</span>
-                                <span className={`badge ${getBadgeClass(file.language)}`}>
-                                    {file.language || 'otros'}
-                                </span>
-                                </div>
-                                <div className="flex gap-3">
-                                <button
-                                    onClick={() => {
-                                    // Ver contenido (modal simple con alert)
-                                    alert('Contenido de ' + file.name + ':\n\n' + file.content);
-                                    }}
-                                    className="text-gray-400 hover:text-white transition"
-                                    title="Ver contenido"
+                        {/* Crear nuevo archivo */}
+                        <div className="glass-card mb-8">
+                            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <i className="fa-solid fa-plus-circle text-blue-400" />
+                                Nuevo archivo
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <input
+                                    type="text"
+                                    placeholder="Nombre (ej: bot.js)"
+                                    value={newFile.name}
+                                    onChange={(e) => setNewFile({ ...newFile, name: e.target.value })}
+                                    className="bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <select
+                                    value={newFile.language}
+                                    onChange={(e) => setNewFile({ ...newFile, language: e.target.value })}
+                                    className="bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
-                                    <i className="fa-regular fa-eye" />
-                                </button>
+                                    <option value="javascript">JavaScript</option>
+                                    <option value="python">Python</option>
+                                    <option value="json">JSON</option>
+                                    <option value="html">HTML</option>
+                                    <option value="css">CSS</option>
+                                    <option value="markdown">Markdown</option>
+                                </select>
                                 <button
-                                    onClick={() => deleteFile(idx)}
-                                    className="text-red-400 hover:text-red-600 transition"
-                                    title="Eliminar"
+                                    onClick={addFile}
+                                    className="bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
                                 >
-                                    <i className="fa-regular fa-trash-can" />
+                                    <i className="fa-solid fa-plus" />
+                                    Crear archivo
                                 </button>
-                                </div>
                             </div>
-                            ))}
+                            <textarea
+                                placeholder="Contenido del archivo..."
+                                value={newFile.content}
+                                onChange={(e) => setNewFile({ ...newFile, content: e.target.value })}
+                                className="code-editor w-full mt-4"
+                            />
                         </div>
-                        )}
-                    </div>
+
+                        {/* Importar desde GitHub */}
+                        <div className="glass-card mb-8">
+                            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <i className="fa-brands fa-github text-purple-400" />
+                                Importar desde GitHub
+                            </h3>
+                            <div className="flex flex-col md:flex-row gap-4">
+                                <input
+                                    type="url"
+                                    placeholder="URL raw (ej: https://raw.githubusercontent.com/.../bot.js)"
+                                    value={githubUrl}
+                                    onChange={(e) => setGithubUrl(e.target.value)}
+                                    className="flex-1 bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <button
+                                    onClick={importFromGithub}
+                                    className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-bold transition flex items-center gap-2"
+                                >
+                                    <i className="fa-solid fa-cloud-arrow-down" />
+                                    Importar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Subir archivo local */}
+                        <div className="glass-card mb-8">
+                            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <i className="fa-solid fa-upload text-green-400" />
+                                Subir archivo local
+                            </h3>
+                            <input
+                                type="file"
+                                onChange={handleFileUpload}
+                                className="block w-full text-sm text-gray-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+                            />
+                        </div>
+
+                        {/* Lista de archivos */}
+                        <div>
+                            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <i className="fa-regular fa-folder-open" />
+                                Archivos ({files.length})
+                            </h3>
+                            {files.length === 0 ? (
+                                <p className="text-gray-500">No hay archivos aún. Crea uno nuevo.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {files.map((file, idx) => (
+                                        <div key={idx} className="file-item flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                <i className="fa-regular fa-file text-gray-400" />
+                                                <span className="font-mono">{file.name}</span>
+                                                <span className={`badge ${getBadgeClass(file.language)}`}>
+                                                    {file.language || 'otros'}
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={() => {
+                                                        alert('Contenido de ' + file.name + ':\n\n' + file.content);
+                                                    }}
+                                                    className="text-gray-400 hover:text-white transition"
+                                                    title="Ver contenido"
+                                                >
+                                                    <i className="fa-regular fa-eye" />
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteFile(idx)}
+                                                    className="text-red-400 hover:text-red-600 transition"
+                                                    title="Eliminar"
+                                                >
+                                                    <i className="fa-regular fa-trash-can" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 );
             }
 
             // =============================================================
-            // 8.  COMPONENTE: CONSOLA (ConsoleStats)
+            // 7. COMPONENTE: CONSOLA (desactivada)
             // =============================================================
             function ConsoleStats() {
                 const [isConnected, setIsConnected] = React.useState(false);
@@ -849,269 +745,252 @@
 
                 return (
                     <div className="fade-in">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                        <h1 className="text-3xl font-bold">Consola y Recursos</h1>
-                        <div className="flex gap-3">
-                        {!isConnected ? (
-                            <button
-                            onClick={handleConnect}
-                            disabled={isLoading}
-                            className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-xl font-bold transition disabled:opacity-50 flex items-center gap-3"
-                            >
-                            {isLoading && <span className="spinner" />}
-                            {isLoading ? 'Conectando...' : (
-                                <>
-                                <i className="fa-solid fa-plug" />
-                                Activar consola
-                                </>
-                            )}
-                            </button>
-                        ) : (
-                            <button
-                            onClick={handleDisconnect}
-                            className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-xl font-bold transition flex items-center gap-3"
-                            >
-                            <i className="fa-solid fa-power-off" />
-                            Desactivar
-                            </button>
-                        )}
-                        </div>
-                    </div>
-
-                    {/* Estado */}
-                    <div
-                        className={`mb-6 p-3 rounded-xl text-center font-bold ${
-                        isConnected
-                            ? 'bg-green-800/60 text-green-200 border border-green-700'
-                            : 'bg-yellow-800/60 text-yellow-200 border border-yellow-700'
-                        }`}
-                    >
-                        {isConnected ? '✅ Consola activa' : '⛔ Consola desactivada (sin conexión real)'}
-                    </div>
-
-                    {/* Estadísticas */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        <div className="glass-card">
-                        <p className="text-gray-400 text-sm flex items-center gap-2">
-                            <i className="fa-solid fa-microchip" />
-                            CPU
-                        </p>
-                        <p className="text-2xl font-bold">{stats.cpu.toFixed(1)}%</p>
-                        <div className="progress-bar">
-                            <div className="progress-fill" style={{ width: stats.cpu + '%' }} />
-                        </div>
-                        </div>
-
-                        <div className="glass-card">
-                        <p className="text-gray-400 text-sm flex items-center gap-2">
-                            <i className="fa-solid fa-memory" />
-                            RAM
-                        </p>
-                        <p className="text-2xl font-bold">
-                            {stats.ramUsed} MB / {stats.ramTotal} MB
-                        </p>
-                        <div className="progress-bar">
-                            <div
-                            className="progress-fill"
-                            style={{ width: (stats.ramUsed / stats.ramTotal) * 100 + '%' }}
-                            />
-                        </div>
-                        </div>
-
-                        <div className="glass-card">
-                        <p className="text-gray-400 text-sm flex items-center gap-2">
-                            <i className="fa-solid fa-hard-drive" />
-                            Disco
-                        </p>
-                        <p className="text-2xl font-bold">
-                            {stats.diskUsed.toFixed(1)} GB / {stats.diskTotal} GB
-                        </p>
-                        <div className="progress-bar">
-                            <div
-                            className="progress-fill"
-                            style={{ width: (stats.diskUsed / stats.diskTotal) * 100 + '%' }}
-                            />
-                        </div>
-                        </div>
-
-                        <div className="glass-card">
-                        <p className="text-gray-400 text-sm flex items-center gap-2">
-                            <i className="fa-solid fa-network-wired" />
-                            Red
-                        </p>
-                        <p className="text-2xl font-bold">{stats.network.toFixed(1)} Mbps</p>
-                        <div className="progress-bar">
-                            <div
-                            className="progress-fill"
-                            style={{ width: Math.min(stats.network * 10, 100) + '%' }}
-                            />
-                        </div>
-                        </div>
-                    </div>
-
-                    {/* Logs */}
-                    <div className="bg-black/60 p-4 rounded-2xl border border-gray-700">
-                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                        <i className="fa-solid fa-list-ul" />
-                        Logs
-                        </h3>
-                        <div className="h-64 overflow-y-auto font-mono text-sm space-y-1">
-                        {logs.map((log, i) => (
-                            <div key={i} className={`border-b border-gray-800/60 py-1 ${getLogClass(log.level)}`}>
-                            [{log.level.toUpperCase()}] {log.message}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <h1 className="text-3xl font-bold">Consola y Recursos</h1>
+                            <div className="flex gap-3">
+                                {!isConnected ? (
+                                    <button
+                                        onClick={handleConnect}
+                                        disabled={isLoading}
+                                        className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-xl font-bold transition disabled:opacity-50 flex items-center gap-3"
+                                    >
+                                        {isLoading && <span className="spinner" />}
+                                        {isLoading ? 'Conectando...' : (
+                                            <>
+                                                <i className="fa-solid fa-plug" />
+                                                Activar consola
+                                            </>
+                                        )}
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleDisconnect}
+                                        className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-xl font-bold transition flex items-center gap-3"
+                                    >
+                                        <i className="fa-solid fa-power-off" />
+                                        Desactivar
+                                    </button>
+                                )}
                             </div>
-                        ))}
                         </div>
 
-                        {/* Input de prueba (solo cuando está desactivado) */}
-                        {!isConnected && (
-                        <div className="mt-4 flex gap-3">
-                            <input
-                            type="text"
-                            placeholder="Escribe un log de prueba (ej: [ERROR] Algo falló)"
-                            value={logInput}
-                            onChange={(e) => setLogInput(e.target.value)}
-                            className="flex-1 bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                            <button
-                            onClick={sendTestLog}
-                            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-xl transition"
-                            >
-                            Enviar
-                            </button>
+                        {/* Estado */}
+                        <div
+                            className={`mb-6 p-3 rounded-xl text-center font-bold ${
+                                isConnected
+                                    ? 'bg-green-800/60 text-green-200 border border-green-700'
+                                    : 'bg-yellow-800/60 text-yellow-200 border border-yellow-700'
+                            }`}
+                        >
+                            {isConnected ? '✅ Consola activa' : '⛔ Consola desactivada (sin conexión real)'}
                         </div>
-                        )}
-                    </div>
 
-                    <p className="text-gray-500 text-sm mt-4">
-                        * La consola real requiere conexión con el panel de Pterodactyl. Actualmente está desactivada.
-                    </p>
+                        {/* Estadísticas */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                            <div className="glass-card">
+                                <p className="text-gray-400 text-sm flex items-center gap-2">
+                                    <i className="fa-solid fa-microchip" />
+                                    CPU
+                                </p>
+                                <p className="text-2xl font-bold">{stats.cpu.toFixed(1)}%</p>
+                                <div className="progress-bar">
+                                    <div className="progress-fill" style={{ width: stats.cpu + '%' }} />
+                                </div>
+                            </div>
+
+                            <div className="glass-card">
+                                <p className="text-gray-400 text-sm flex items-center gap-2">
+                                    <i className="fa-solid fa-memory" />
+                                    RAM
+                                </p>
+                                <p className="text-2xl font-bold">
+                                    {stats.ramUsed} MB / {stats.ramTotal} MB
+                                </p>
+                                <div className="progress-bar">
+                                    <div
+                                        className="progress-fill"
+                                        style={{ width: (stats.ramUsed / stats.ramTotal) * 100 + '%' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="glass-card">
+                                <p className="text-gray-400 text-sm flex items-center gap-2">
+                                    <i className="fa-solid fa-hard-drive" />
+                                    Disco
+                                </p>
+                                <p className="text-2xl font-bold">
+                                    {stats.diskUsed.toFixed(1)} GB / {stats.diskTotal} GB
+                                </p>
+                                <div className="progress-bar">
+                                    <div
+                                        className="progress-fill"
+                                        style={{ width: (stats.diskUsed / stats.diskTotal) * 100 + '%' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="glass-card">
+                                <p className="text-gray-400 text-sm flex items-center gap-2">
+                                    <i className="fa-solid fa-network-wired" />
+                                    Red
+                                </p>
+                                <p className="text-2xl font-bold">{stats.network.toFixed(1)} Mbps</p>
+                                <div className="progress-bar">
+                                    <div
+                                        className="progress-fill"
+                                        style={{ width: Math.min(stats.network * 10, 100) + '%' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Logs */}
+                        <div className="bg-black/60 p-4 rounded-2xl border border-gray-700">
+                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                <i className="fa-solid fa-list-ul" />
+                                Logs
+                            </h3>
+                            <div className="h-64 overflow-y-auto font-mono text-sm space-y-1">
+                                {logs.map((log, i) => (
+                                    <div key={i} className={`border-b border-gray-800/60 py-1 ${getLogClass(log.level)}`}>
+                                        [{log.level.toUpperCase()}] {log.message}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {!isConnected && (
+                                <div className="mt-4 flex gap-3">
+                                    <input
+                                        type="text"
+                                        placeholder="Escribe un log de prueba (ej: [ERROR] Algo falló)"
+                                        value={logInput}
+                                        onChange={(e) => setLogInput(e.target.value)}
+                                        className="flex-1 bg-gray-700/70 p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <button
+                                        onClick={sendTestLog}
+                                        className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-xl transition"
+                                    >
+                                        Enviar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <p className="text-gray-500 text-sm mt-4">
+                            * La consola real requiere conexión con el panel de Pterodactyl. Actualmente está desactivada.
+                        </p>
                     </div>
                 );
             }
 
             // =============================================================
-            // 9.  COMPONENTE: AJUSTES (Settings)
+            // 8. COMPONENTE: AJUSTES (Settings)
             // =============================================================
-            function Settings({ user }) {
+            function Settings() {
                 const [startup, setStartup] = React.useState('');
                 const [packages, setPackages] = React.useState('');
                 const [envVars, setEnvVars] = React.useState('');
                 const [loading, setLoading] = React.useState(true);
 
                 React.useEffect(() => {
-                    if (!user) return;
-                    const fetchSettings = async () => {
+                    const stored = localStorage.getItem('waevo_settings');
+                    if (stored) {
                         try {
-                            const docRef = db.collection('users').doc(user.uid).collection('data').doc('settings');
-                            const docSnap = await docRef.get();
-                            if (docSnap.exists) {
-                                const data = docSnap.data();
-                                setStartup(data.startup || '');
-                                setPackages(data.packages || '');
-                                setEnvVars(data.envVars || '');
-                            }
-                        } catch (err) {
-                            toast.error('Error al cargar ajustes');
-                        } finally {
-                            setLoading(false);
-                        }
-                    };
-                    fetchSettings();
-                }, [user]);
-
-                const saveSettings = async () => {
-                    if (!user) return;
-                    try {
-                        const docRef = db.collection('users').doc(user.uid).collection('data').doc('settings');
-                        await docRef.set({ startup, packages, envVars });
-                        toast.success('Ajustes guardados');
-                    } catch (err) {
-                        toast.error('Error al guardar ajustes');
+                            const data = JSON.parse(stored);
+                            setStartup(data.startup || '');
+                            setPackages(data.packages || '');
+                            setEnvVars(data.envVars || '');
+                        } catch (e) {}
                     }
+                    setLoading(false);
+                }, []);
+
+                const saveSettings = () => {
+                    const data = { startup, packages, envVars };
+                    localStorage.setItem('waevo_settings', JSON.stringify(data));
+                    toast.success('Ajustes guardados');
                 };
 
                 if (loading) {
                     return (
                         <div className="flex items-center justify-center h-64">
-                        <span className="spinner" />
+                            <span className="spinner" />
                         </div>
                     );
                 }
 
                 return (
                     <div className="fade-in">
-                    <h1 className="text-3xl font-bold mb-6">Ajustes</h1>
+                        <h1 className="text-3xl font-bold mb-6">Ajustes</h1>
 
-                    <div className="glass-card space-y-6">
-                        {/* Startup */}
-                        <div>
-                        <label className="block text-gray-400 mb-2 flex items-center gap-2">
-                            <i className="fa-solid fa-play text-green-400" />
-                            Comando de inicio (startup)
-                        </label>
-                        <input
-                            type="text"
-                            value={startup}
-                            onChange={(e) => setStartup(e.target.value)}
-                            placeholder="Ej: node bot.js"
-                            className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <p className="text-gray-500 text-xs mt-1">
-                            Comando que se ejecutará al iniciar el bot.
-                        </p>
+                        <div className="glass-card space-y-6">
+                            <div>
+                                <label className="block text-gray-400 mb-2 flex items-center gap-2">
+                                    <i className="fa-solid fa-play text-green-400" />
+                                    Comando de inicio (startup)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={startup}
+                                    onChange={(e) => setStartup(e.target.value)}
+                                    placeholder="Ej: node bot.js"
+                                    className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <p className="text-gray-500 text-xs mt-1">
+                                    Comando que se ejecutará al iniciar el bot.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-400 mb-2 flex items-center gap-2">
+                                    <i className="fa-solid fa-cube text-purple-400" />
+                                    Paquetes adicionales
+                                </label>
+                                <input
+                                    type="text"
+                                    value={packages}
+                                    onChange={(e) => setPackages(e.target.value)}
+                                    placeholder="Ej: express dotenv"
+                                    className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <p className="text-gray-500 text-xs mt-1">
+                                    Separados por espacio. Se instalarán con npm o pip.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-400 mb-2 flex items-center gap-2">
+                                    <i className="fa-solid fa-key text-yellow-400" />
+                                    Variables de entorno
+                                </label>
+                                <textarea
+                                    value={envVars}
+                                    onChange={(e) => setEnvVars(e.target.value)}
+                                    placeholder="CLAVE=valor&#10;OTRA_CLAVE=otro_valor"
+                                    className="code-editor w-full"
+                                    rows="4"
+                                />
+                                <p className="text-gray-500 text-xs mt-1">
+                                    Una variable por línea, formato CLAVE=valor.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={saveSettings}
+                                className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-bold transition flex items-center gap-3 shadow-lg shadow-blue-600/20"
+                            >
+                                <i className="fa-solid fa-floppy-disk" />
+                                Guardar todos los cambios
+                            </button>
                         </div>
-
-                        {/* Paquetes */}
-                        <div>
-                        <label className="block text-gray-400 mb-2 flex items-center gap-2">
-                            <i className="fa-solid fa-cube text-purple-400" />
-                            Paquetes adicionales
-                        </label>
-                        <input
-                            type="text"
-                            value={packages}
-                            onChange={(e) => setPackages(e.target.value)}
-                            placeholder="Ej: express dotenv"
-                            className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <p className="text-gray-500 text-xs mt-1">
-                            Separados por espacio. Se instalarán con npm o pip.
-                        </p>
-                        </div>
-
-                        {/* Variables de entorno */}
-                        <div>
-                        <label className="block text-gray-400 mb-2 flex items-center gap-2">
-                            <i className="fa-solid fa-key text-yellow-400" />
-                            Variables de entorno
-                        </label>
-                        <textarea
-                            value={envVars}
-                            onChange={(e) => setEnvVars(e.target.value)}
-                            placeholder="CLAVE=valor&#10;OTRA_CLAVE=otro_valor"
-                            className="code-editor w-full"
-                            rows="4"
-                        />
-                        <p className="text-gray-500 text-xs mt-1">
-                            Una variable por línea, formato CLAVE=valor.
-                        </p>
-                        </div>
-
-                        <button
-                        onClick={saveSettings}
-                        className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-bold transition flex items-center gap-3 shadow-lg shadow-blue-600/20"
-                        >
-                        <i className="fa-solid fa-floppy-disk" />
-                        Guardar todos los cambios
-                        </button>
-                    </div>
                     </div>
                 );
             }
 
             // =============================================================
-            // 10. COMPONENTE: ADMIN PANEL (crear cuentas)
+            // 9. COMPONENTE: PANEL DE ADMINISTRACIÓN (crear cuentas)
             // =============================================================
             function AdminPanel() {
                 const [email, setEmail] = React.useState('');
@@ -1119,27 +998,55 @@
                 const [serverType, setServerType] = React.useState('node');
                 const [version, setVersion] = React.useState('18');
                 const [loading, setLoading] = React.useState(false);
+                const [accounts, setAccounts] = React.useState([]);
+                const [loadingAccounts, setLoadingAccounts] = React.useState(true);
+
+                // Cargar cuentas desde Firestore
+                React.useEffect(() => {
+                    const fetchAccounts = async () => {
+                        try {
+                            const snapshot = await db.collection('users').get();
+                            const list = [];
+                            snapshot.forEach(doc => {
+                                list.push({ id: doc.id, ...doc.data() });
+                            });
+                            setAccounts(list);
+                        } catch (err) {
+                            toast.error('Error al cargar cuentas');
+                        } finally {
+                            setLoadingAccounts(false);
+                        }
+                    };
+                    fetchAccounts();
+                }, []);
 
                 const handleCreate = async (e) => {
                     e.preventDefault();
                     setLoading(true);
                     try {
-                        const userCred = await auth.createUserWithEmailAndPassword(email, password);
-                        const uid = userCred.user.uid;
-                        await db.collection('users').doc(uid).collection('data').doc('server').set({
-                            type: serverType,
+                        await db.collection('users').add({
+                            email,
+                            password, // Nota: en producción NUNCA guardar en texto plano
+                            serverType,
                             version,
-                            createdAt: new Date().toISOString()
-                        });
-                        await db.collection('users').doc(uid).collection('data').doc('files').set({ files: [] });
-                        await db.collection('users').doc(uid).collection('data').doc('settings').set({
-                            startup: '',
-                            packages: '',
-                            envVars: ''
+                            createdAt: new Date().toISOString(),
+                            files: [],
+                            settings: {
+                                startup: '',
+                                packages: '',
+                                envVars: ''
+                            }
                         });
                         toast.success('Cuenta creada con éxito');
                         setEmail('');
                         setPassword('');
+                        // Recargar lista
+                        const snapshot = await db.collection('users').get();
+                        const list = [];
+                        snapshot.forEach(doc => {
+                            list.push({ id: doc.id, ...doc.data() });
+                        });
+                        setAccounts(list);
                     } catch (error) {
                         toast.error(error.message);
                     } finally {
@@ -1147,157 +1054,145 @@
                     }
                 };
 
-                return (
-                    <div className="glass-card">
-                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                        <i className="fa-solid fa-user-plus text-green-400" />
-                        Crear nueva cuenta de usuario
-                    </h2>
-                    <form onSubmit={handleCreate} className="space-y-4">
-                        <input
-                        type="email"
-                        placeholder="Correo electrónico"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                        />
-                        <input
-                        type="password"
-                        placeholder="Contraseña"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                        />
-                        <div className="flex flex-col md:flex-row gap-4">
-                        <select
-                            value={serverType}
-                            onChange={(e) => setServerType(e.target.value)}
-                            className="flex-1 bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="node">Node.js</option>
-                            <option value="python">Python</option>
-                        </select>
-                        <input
-                            type="text"
-                            placeholder="Versión (ej: 18, 3.10)"
-                            value={version}
-                            onChange={(e) => setVersion(e.target.value)}
-                            className="flex-1 bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        </div>
-                        <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-xl font-bold transition disabled:opacity-50 flex items-center justify-center gap-3"
-                        >
-                        {loading && <span className="spinner" />}
-                        {loading ? 'Creando...' : (
-                            <>
-                            <i className="fa-solid fa-user-plus" />
-                            Crear cuenta
-                            </>
-                        )}
-                        </button>
-                    </form>
-                    </div>
-                );
-            }
-
-            // =============================================================
-            // 11. COMPONENTE: PÁGINA DE ADMIN (oculta)
-            // =============================================================
-            function AdminPage() {
-                const [unlocked, setUnlocked] = React.useState(false);
-                const [passwordInput, setPasswordInput] = React.useState('');
-                const [showPrompt, setShowPrompt] = React.useState(false);
-
-                const handlePlusClick = () => setShowPrompt(true);
-                const checkPassword = () => {
-                    if (passwordInput === 'Alex27Junio') {
-                        setUnlocked(true);
-                        setShowPrompt(false);
-                        setPasswordInput('');
-                        toast.success('Acceso concedido');
-                    } else {
-                        toast.error('Contraseña incorrecta');
+                const deleteAccount = async (id) => {
+                    if (!confirm('¿Seguro que quieres eliminar esta cuenta?')) return;
+                    try {
+                        await db.collection('users').doc(id).delete();
+                        toast.success('Cuenta eliminada');
+                        setAccounts(accounts.filter(a => a.id !== id));
+                    } catch (err) {
+                        toast.error('Error al eliminar');
                     }
                 };
 
+                if (loadingAccounts) {
+                    return (
+                        <div className="flex items-center justify-center h-64">
+                            <span className="spinner" />
+                        </div>
+                    );
+                }
+
                 return (
-                    <div className="min-h-screen bg-gray-900 text-white p-8">
-                    {/* Botón "+" oculto */}
-                    <button
-                        onClick={handlePlusClick}
-                        className="fixed bottom-6 right-6 text-5xl font-bold hidden-btn"
-                        style={{ opacity: 0.12 }}
-                    >
-                        +
-                    </button>
+                    <div className="fade-in">
+                        <h1 className="text-3xl font-bold mb-6">Panel de Administración</h1>
 
-                    {/* Prompt de contraseña */}
-                    {showPrompt && (
-                        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 fade-in">
-                        <div className="bg-gray-800/90 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 max-w-md w-full">
-                            <h2 className="text-2xl font-bold mb-4">Acceso al panel de administración</h2>
-                            <p className="text-gray-400 mb-4">Introduce la contraseña para continuar.</p>
-                            <input
-                            type="password"
-                            value={passwordInput}
-                            onChange={(e) => setPasswordInput(e.target.value)}
-                            placeholder="Contraseña"
-                            className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-                            onKeyDown={(e) => e.key === 'Enter' && checkPassword()}
-                            />
-                            <div className="flex gap-3">
-                            <button
-                                onClick={checkPassword}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold transition"
-                            >
-                                Validar
-                            </button>
-                            <button
-                                onClick={() => setShowPrompt(false)}
-                                className="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-xl font-bold transition"
-                            >
-                                Cancelar
-                            </button>
-                            </div>
+                        {/* Formulario de creación */}
+                        <div className="glass-card mb-8 admin-section">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                                <i className="fa-solid fa-user-plus text-green-400" />
+                                Crear nueva cuenta de usuario
+                            </h2>
+                            <form onSubmit={handleCreate} className="space-y-4">
+                                <input
+                                    type="email"
+                                    placeholder="Correo electrónico"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Contraseña"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                                <div className="flex flex-col md:flex-row gap-4">
+                                    <select
+                                        value={serverType}
+                                        onChange={(e) => setServerType(e.target.value)}
+                                        className="flex-1 bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="node">Node.js</option>
+                                        <option value="python">Python</option>
+                                    </select>
+                                    <input
+                                        type="text"
+                                        placeholder="Versión (ej: 18, 3.10)"
+                                        value={version}
+                                        onChange={(e) => setVersion(e.target.value)}
+                                        className="flex-1 bg-gray-700/70 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-xl font-bold transition disabled:opacity-50 flex items-center justify-center gap-3"
+                                >
+                                    {loading && <span className="spinner" />}
+                                    {loading ? 'Creando...' : (
+                                        <>
+                                            <i className="fa-solid fa-user-plus" />
+                                            Crear cuenta
+                                        </>
+                                    )}
+                                </button>
+                            </form>
                         </div>
-                        </div>
-                    )}
 
-                    {/* Panel de admin (visible solo si unlocked) */}
-                    {unlocked && (
-                        <div className="max-w-4xl mx-auto mt-8 fade-in">
-                        <h1 className="text-4xl font-bold mb-8 text-center">Panel de Administración</h1>
-                        <AdminPanel />
-                        <p className="text-gray-500 text-sm text-center mt-6">
-                            Desde aquí puedes crear nuevas cuentas de usuario para el hosting.
-                        </p>
+                        {/* Lista de cuentas existentes */}
+                        <div className="glass-card">
+                            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <i className="fa-regular fa-users" />
+                                Cuentas creadas ({accounts.length})
+                            </h3>
+                            {accounts.length === 0 ? (
+                                <p className="text-gray-500">No hay cuentas creadas aún.</p>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="text-gray-400 border-b border-gray-700">
+                                            <tr>
+                                                <th className="pb-2 pr-4">Correo</th>
+                                                <th className="pb-2 pr-4">Tipo</th>
+                                                <th className="pb-2 pr-4">Versión</th>
+                                                <th className="pb-2">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {accounts.map((acc) => (
+                                                <tr key={acc.id} className="border-b border-gray-800/60">
+                                                    <td className="py-3 pr-4 font-mono">{acc.email}</td>
+                                                    <td className="py-3 pr-4">{acc.serverType === 'node' ? 'Node.js' : 'Python'}</td>
+                                                    <td className="py-3 pr-4">{acc.version}</td>
+                                                    <td className="py-3">
+                                                        <button
+                                                            onClick={() => deleteAccount(acc.id)}
+                                                            className="text-red-400 hover:text-red-600 transition"
+                                                            title="Eliminar cuenta"
+                                                        >
+                                                            <i className="fa-regular fa-trash-can" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
-                    )}
                     </div>
                 );
             }
 
             // =============================================================
-            // 12. APLICACIÓN PRINCIPAL (enrutamiento por hash)
+            // 10. APLICACIÓN PRINCIPAL
             // =============================================================
             function App() {
-                const { user, loading } = useAuth();
-                const [page, setPage] = React.useState('login');
+                const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+                const [page, setPage] = React.useState('dashboard');
 
+                // Sincronizar con hash
                 React.useEffect(() => {
                     const handleHash = () => {
                         const hash = window.location.hash.replace('#', '');
-                        if (['dashboard', 'files', 'console', 'settings'].includes(hash)) {
+                        if (['dashboard', 'files', 'console', 'settings', 'admin'].includes(hash)) {
                             setPage(hash);
-                        } else if (hash === 'admin') {
-                            setPage('admin');
                         } else {
-                            setPage('login');
+                            setPage('dashboard');
                         }
                     };
                     window.addEventListener('hashchange', handleHash);
@@ -1305,60 +1200,55 @@
                     return () => window.removeEventListener('hashchange', handleHash);
                 }, []);
 
-                if (loading) {
-                    return (
-                        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-                        <span className="spinner" />
-                        </div>
-                    );
+                const handleLogin = () => {
+                    setIsLoggedIn(true);
+                    window.location.hash = 'dashboard';
+                };
+
+                const handleLogout = () => {
+                    setIsLoggedIn(false);
+                    window.location.hash = '';
+                    toast.success('Sesión cerrada');
+                };
+
+                if (!isLoggedIn) {
+                    return <LoginForm onLogin={handleLogin} />;
                 }
 
-                // Si no hay usuario y no estamos en admin → login
-                if (!user && page !== 'admin') {
-                    return <LoginForm />;
-                }
-
-                // Admin (accesible sin login)
-                if (page === 'admin') {
-                    return <AdminPage />;
-                }
-
-                // Dashboard protegido
                 let content;
                 switch (page) {
                     case 'dashboard':
-                        content = <DashboardHome user={user} />;
+                        content = <DashboardHome />;
                         break;
                     case 'files':
-                        content = <FileManager user={user} />;
+                        content = <FileManager />;
                         break;
                     case 'console':
                         content = <ConsoleStats />;
                         break;
                     case 'settings':
-                        content = <Settings user={user} />;
+                        content = <Settings />;
+                        break;
+                    case 'admin':
+                        content = <AdminPanel />;
                         break;
                     default:
-                        content = <div>Página no encontrada</div>;
+                        content = <DashboardHome />;
                 }
 
                 return (
-                    <DashboardLayout currentPage={page} setPage={setPage}>
-                    {content}
+                    <DashboardLayout currentPage={page} setPage={setPage} onLogout={handleLogout}>
+                        {content}
                     </DashboardLayout>
                 );
             }
 
             // =============================================================
-            // 13. RENDER FINAL
+            // 11. RENDER FINAL
             // =============================================================
             const rootElement = document.getElementById('root');
             const root = ReactDOM.createRoot(rootElement);
-            root.render(
-                <AuthProvider>
-                <App />
-                </AuthProvider>
-            );
+            root.render(<App />);
 
         })();
     </script>
